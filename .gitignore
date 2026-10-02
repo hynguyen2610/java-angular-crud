@@ -1,0 +1,38 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE and editor settings
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# Java / Maven build output
+backend/target/
+*.class
+*.jar
+*.war
+*.log
+
+# Angular / Node.js dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/.cache/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local runtime data
+data/
+*.pid
+*.pid.lock
