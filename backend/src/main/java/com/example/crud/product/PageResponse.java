@@ -1,0 +1,13 @@
+package com.example.crud.product;
+
+import java.util.List;
+import org.springframework.data.domain.Page;
+
+/** Our own stable JSON shape for pages (matches Angular's `Page<T>`). */
+public record PageResponse<T>(List<T> content, int page, int size, long totalElements, int totalPages) {
+
+    public static <T> PageResponse<T> from(Page<T> p) {
+        return new PageResponse<>(p.getContent(), p.getNumber(), p.getSize(),
+                p.getTotalElements(), p.getTotalPages());
+    }
+}
