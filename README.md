@@ -101,6 +101,7 @@ Open `http://localhost:4200`. The proxy forwards `/api/*` to Spring, so the brow
 | `HttpClient`, `HttpParams`, typed responses | `product.service.ts` |
 | Functional interceptors (auth header, global 401) | `core/auth.interceptor.ts`, `core/error.interceptor.ts` |
 | Reactive forms, validators, server-side errors on controls | `product-form.component.ts` |
+| Sibling components via parent-owned state and input/output events | `product-list.component.ts`, `product-search-toolbar.component.ts`, `product-table.component.ts` |
 | Template binding: `{{ }}`, `[prop]`, `(event)`, `[formControl]` | all templates |
 | Control flow `@if`, `@for` + `track`, `@empty`, `@if (x; as y)` | `product-list.component.ts` |
 | Pipes: `currency`, `date` | `product-list.component.ts` |
