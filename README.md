@@ -6,12 +6,52 @@ Domain: **Products** with login, list/search/pagination, create, edit, delete.
 ```
 java-angular-crud/
   backend/    Spring Boot API   (http://localhost:8080)
-  frontend/   Angular sources   (http://localhost:4200)  -> copy `src/` into a fresh Angular app
+  frontend/   Angular 19 SPA    (http://localhost:4200)
+```
+
+## Run the complete system with Docker Compose
+
+Prerequisites: Docker Desktop (or Docker Engine with the Compose plugin).
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Open `http://localhost:4200` and sign in with **admin / admin123**. The Angular
+application is served by Nginx; Nginx proxies `/api/*` to Spring Boot, so the
+browser remains on one origin. The API and H2 console are also available at
+`http://localhost:8080` and `http://localhost:8080/h2-console`.
+
+To stop the stack, press `Ctrl+C`, or run:
+
+```bash
+docker compose down
+```
+
+The application uses an in-memory H2 database, so product data is deliberately
+reset whenever the backend container is recreated. `.env` is ignored; replace
+the demo `JWT_SECRET` before using this setup outside local development.
+
+Run the end-to-end Compose smoke check (it starts and stops the stack):
+
+```bash
+./scripts/verify-compose.sh
+```
+
+For frontend-only development, install the pinned dependencies once and use
+the existing proxy configuration:
+
+```bash
+cd frontend
+npm ci
+npm start
 ```
 
 ## 1. Run the backend
 
-Needs JDK 17+ and Maven.
+Needs JDK 17+ and Maven. The Docker workflow above is the recommended way to
+run both services together.
 
 ```bash
 cd backend
@@ -24,21 +64,13 @@ mvn spring-boot:run
 
 ## 2. Set up the frontend
 
-Needs Node 20+. The Angular CLI is pinned to v19 so the file names match this project.
+Needs Node 20+. The Angular CLI is pinned to v19 in `frontend/package.json`.
 
 ```bash
-npx @angular/cli@19 new frontend-app --routing --style=css --ssr=false --skip-git
-cd frontend-app
-
-# copy this project's sources over the generated ones
-cp -r ../frontend/src/* src/
-cp ../frontend/proxy.conf.json .
-
-# remove the generated files we replaced
-rm -f src/app/app.component.html src/app/app.component.css src/app/app.component.spec.ts
-
-ng serve --proxy-config proxy.conf.json
-ng test        # runs product.service.spec.ts
+cd frontend
+npm ci
+npm start
+npm test
 ```
 
 Open `http://localhost:4200`. The proxy forwards `/api/*` to Spring, so the browser sees one origin and CORS is not involved in development.
