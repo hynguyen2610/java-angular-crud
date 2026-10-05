@@ -22,7 +22,7 @@ import { applyProductServerErrors, productValidators } from './product-validatio
 
         <label>Description
           <textarea formControlName="description" rows="3"></textarea>
-          @if (form.controls.description.errors; as e) {
+          @if (form.controls.description.touched && form.controls.description.errors; as e) {
             <small class="err">{{ e['server'] ?? 'Max 500 characters' }}</small>
           }
         </label>

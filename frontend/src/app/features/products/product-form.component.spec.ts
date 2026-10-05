@@ -40,6 +40,14 @@ describe('ProductFormComponent validation', () => {
     expect(component.form.controls.quantity.hasError('integer')).toBeTrue();
   });
 
+  it('does not show an untouched description validation error', () => {
+    component.form.controls.description.setValue('x'.repeat(501));
+    fixture.detectChanges();
+
+    expect(component.form.controls.description.touched).toBeFalse();
+    expect(fixture.nativeElement.textContent).not.toContain('Max 500 characters');
+  });
+
   it('shows a mapped server field error beside the affected control', () => {
     component['showServerErrors'](new HttpErrorResponse({
       status: 400,
