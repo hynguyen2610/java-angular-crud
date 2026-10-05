@@ -48,10 +48,11 @@ recipe: treat `JWT_SECRET`, PostgreSQL credentials, and bootstrap credentials
 as secrets.
 
 ```bash
-cp .env.example .env
-# Set non-example values for JWT_SECRET, POSTGRES_PASSWORD, and BOOTSTRAP_ADMIN_PASSWORD.
-docker compose -f compose.yaml -f compose.prod.yaml up --build
+cp .env.example .env && docker compose -f compose.yaml -f compose.prod.yaml up --build
 ```
+
+Before using this outside local testing, replace the example values for
+`JWT_SECRET`, `POSTGRES_PASSWORD`, and `BOOTSTRAP_ADMIN_PASSWORD` in `.env`.
 
 Sign in with `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD` from
 `.env`. The bootstrap account is inserted only when its username does not
