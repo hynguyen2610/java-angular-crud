@@ -22,6 +22,7 @@ input, textarea { width: 100%; padding: .5rem; border: 1px solid var(--border); 
 input.ng-touched.ng-invalid, textarea.ng-touched.ng-invalid { border-color: var(--danger); }
 label { display: block; margin-bottom: 1rem; }
 small.err, .err { color: var(--danger); font-size: .85rem; }
+.backend-starting { margin: .75rem auto; max-width: 900px; padding: .6rem 1rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
 table { width: 100%; border-collapse: collapse; background: var(--surface); }
 th, td { text-align: left; padding: .6rem; border-bottom: 1px solid var(--border); }
 .toolbar { display: flex; gap: .75rem; margin-bottom: 1rem; }

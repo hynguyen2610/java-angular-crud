@@ -2,9 +2,11 @@
 
 ## Outcome and scope
 
-`docker compose up --build` runs the existing Angular product manager and its
-Spring Boot API locally. The browser loads the SPA from `http://localhost:4200`
-and calls the unchanged `/api/*` routes through the same-origin Nginx proxy.
+`docker compose up --build` starts the Angular product manager and its Spring
+Boot API locally. The browser loads the SPA from `http://localhost:4200`
+without waiting for Spring health; Angular displays a startup indicator and
+polls the same-origin `/actuator/health` proxy until the API is ready. Existing
+application calls remain under `/api/*`.
 
 The default Compose file runs the `dev` H2 journey. Combining it with
 `compose.prod.yaml` switches Spring to the PostgreSQL-backed `prod` journey;
@@ -48,7 +50,7 @@ flowchart LR
 | Surface | Scenario | Evidence |
 |---|---|---|
 | API/contract | Existing API remains reachable at `:8080`; `/actuator/health` is the readiness probe, while the H2 console remains dev-only. | Backend tests and both Compose health checks. |
-| Browser UI | `GET :4200/` returns the Angular shell and supports client-side route fallback. | Compose smoke check finds `<app-root>` in the served document. |
+| Browser UI | `GET :4200/` returns the Angular shell and supports client-side route fallback even while Spring starts. Login displays “Starting server…” and is disabled until health is `UP`. | Readiness/login component tests and Compose smoke check. |
 | Browser-to-API journey | Dev login uses `admin/admin123`; production-like login uses the database bootstrap user, then a created product survives a backend restart. | Dev and PostgreSQL Compose smoke scripts. |
 | Realtime behavior | N/A: this application has no realtime protocol or client. | Source inspection; no Socket.IO/WebSocket dependency exists. |
 

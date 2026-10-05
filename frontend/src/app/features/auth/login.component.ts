@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { BackendReadinessService } from '../../core/backend-readiness.service';
 import { errorMessage } from '../../core/http-error';
 
 @Component({
@@ -14,9 +15,10 @@ import { errorMessage } from '../../core/http-error';
       <form [formGroup]="form" (ngSubmit)="submit()">
         <label>Username <input formControlName="username" autocomplete="username" /></label>
         <label>Password <input type="password" formControlName="password" autocomplete="current-password" /></label>
+        @if (!backend.ready()) { <p class="backend-starting" role="status">Starting server…</p> }
         @if (error()) { <p class="err">{{ error() }}</p> }
-        <button class="primary" [disabled]="form.invalid || loading()">
-          {{ loading() ? 'Signing in...' : 'Sign in' }}
+        <button class="primary" [disabled]="form.invalid || loading() || !backend.ready()">
+          {{ !backend.ready() ? 'Server starting…' : loading() ? 'Signing in...' : 'Sign in' }}
         </button>
       </form>
     </div>
@@ -25,6 +27,7 @@ import { errorMessage } from '../../core/http-error';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
+  protected backend = inject(BackendReadinessService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 

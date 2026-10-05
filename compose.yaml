@@ -19,7 +19,6 @@ services:
     build:
       context: ./frontend
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     ports:
       - "4200:8080"

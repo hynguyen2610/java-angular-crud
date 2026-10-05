@@ -34,6 +34,10 @@ deliberately reset whenever the backend container is recreated. Its demo login
 is **admin / admin123**. `.env` is ignored; replace the demo `JWT_SECRET`
 before using this setup outside local development.
 
+The Angular shell starts independently. While Spring Boot is still starting,
+the page shows **Starting server…** and keeps sign-in disabled until its health
+endpoint responds.
+
 Run the end-to-end Compose smoke check (it starts and stops the stack):
 
 ```bash

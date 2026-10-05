@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth.service';
+import { BackendReadinessService } from './core/backend-readiness.service';
 import { ThemeService } from './core/theme.service';
 
 @Component({
@@ -16,10 +17,14 @@ import { ThemeService } from './core/theme.service';
         <button (click)="auth.logout()">Logout</button>
       }
     </header>
+    @if (!backend.ready()) {
+      <p class="backend-starting" role="status">Starting server…</p>
+    }
     <main><router-outlet /></main>
   `,
 })
 export class AppComponent {
   auth = inject(AuthService);
+  backend = inject(BackendReadinessService);
   theme = inject(ThemeService);
 }
