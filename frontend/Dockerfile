@@ -1,8 +1,10 @@
+# syntax=docker/dockerfile:1.7
 FROM node:20.18.1-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 COPY angular.json tsconfig.json tsconfig.app.json ./
 COPY src ./src

@@ -10,6 +10,20 @@ This work does not change product CRUD routes, authentication rules, JWT token
 format, database schema, or browser routing. H2 remains intentionally
 in-memory, so no persistent volume is required or created.
 
+## Build efficiency
+
+Both Dockerfiles require BuildKit and keep dependency installation ahead of
+application-source copies. Maven's local repository and npm's package cache
+are BuildKit cache mounts, so a source-only rebuild reuses downloaded
+dependencies. The backend runtime uses the smaller Alpine JRE image; it still
+contains `curl` because the existing Compose health check requires it.
+
+| Build scenario | Expected cache behavior | Evidence |
+|---|---|---|
+| Rebuild without changing dependency manifests | Maven/npm dependency layers are cached; only source compilation runs. | Two consecutive `docker compose --progress=plain build` runs show `CACHED` dependency-install steps on the second run. |
+| Change `pom.xml` or a package manifest/lockfile | The corresponding dependency step is rerun; the other service can remain cached. | Build output identifies the affected service and dependency layer. |
+| Run the optimized images | Existing ports, health check, Angular shell, and same-origin login journey work. | `./scripts/verify-compose.sh`. |
+
 ## Architecture
 
 ```mermaid

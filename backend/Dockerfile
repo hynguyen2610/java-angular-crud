@@ -1,18 +1,19 @@
+# syntax=docker/dockerfile:1.7
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 
 COPY pom.xml .
-RUN mvn --batch-mode --no-transfer-progress dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn --batch-mode --no-transfer-progress dependency:go-offline
 
 COPY src ./src
-RUN mvn --batch-mode --no-transfer-progress package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn --batch-mode --no-transfer-progress package -DskipTests
 
-FROM eclipse-temurin:17-jre-jammy
-RUN apt-get update \
-    && apt-get install --yes --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd --system app \
-    && useradd --system --gid app --create-home app
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl \
+    && addgroup --system app \
+    && adduser --system --ingroup app --home /app app
 
 WORKDIR /app
 COPY --from=build /workspace/target/*.jar app.jar
