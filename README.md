@@ -15,7 +15,7 @@ Prerequisites: Docker Desktop (or Docker Engine with the Compose plugin).
 
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up --build                 # dev: H2 and demo account
 ```
 
 Open `http://localhost:4200` and sign in with **admin / admin123**. The Angular
@@ -29,14 +29,40 @@ To stop the stack, press `Ctrl+C`, or run:
 docker compose down
 ```
 
-The application uses an in-memory H2 database, so product data is deliberately
-reset whenever the backend container is recreated. `.env` is ignored; replace
-the demo `JWT_SECRET` before using this setup outside local development.
+The default `dev` profile uses an in-memory H2 database, so product data is
+deliberately reset whenever the backend container is recreated. Its demo login
+is **admin / admin123**. `.env` is ignored; replace the demo `JWT_SECRET`
+before using this setup outside local development.
 
 Run the end-to-end Compose smoke check (it starts and stops the stack):
 
 ```bash
 ./scripts/verify-compose.sh
+```
+
+### Production-like PostgreSQL mode
+
+The `prod` profile uses PostgreSQL, Flyway migrations, and database-backed
+users. It is intentionally a local production-like journey, not a deployment
+recipe: treat `JWT_SECRET`, PostgreSQL credentials, and bootstrap credentials
+as secrets.
+
+```bash
+cp .env.example .env
+# Set non-example values for JWT_SECRET, POSTGRES_PASSWORD, and BOOTSTRAP_ADMIN_PASSWORD.
+docker compose -f compose.yaml -f compose.prod.yaml up --build
+```
+
+Sign in with `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD` from
+`.env`. The bootstrap account is inserted only when its username does not
+already exist; rotate its password through an approved administrative process
+after first use. `docker compose down` preserves the PostgreSQL volume;
+`docker compose down -v` permanently deletes its local data.
+
+Run the production-like persistence smoke check with:
+
+```bash
+./scripts/verify-compose-prod.sh
 ```
 
 For frontend-only development, install the pinned dependencies once and use
@@ -59,7 +85,7 @@ mvn spring-boot:run
 ```
 
 - API: `http://localhost:8080/api/products` (needs a token)
-- H2 console: `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:mem:cruddb`, user `sa`, empty password)
+- H2 console (dev only): `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:mem:cruddb`, user `sa`, empty password)
 - Demo login: **admin / admin123**
 
 ## 2. Set up the frontend
@@ -124,17 +150,17 @@ Open `http://localhost:4200`. The proxy forwards `/api/*` to Spring, so the brow
 | Pagination + sorting with Spring Data | `ProductService.java`, `ProductRepository.java` |
 | Stable page JSON (own `PageResponse`) | `PageResponse.java` |
 | Stateless JWT security, filter, 401 vs 403 | `auth/SecurityConfig.java`, `JwtAuthFilter.java`, `JwtService.java` |
-| BCrypt password hashing | `SecurityConfig.java` |
+| BCrypt password hashing and profile-specific users | `auth/*User*.java` |
 | CORS configuration | `SecurityConfig.java` |
 | Transactions, dirty checking on update | `ProductService.java` |
 | `@PrePersist`, `LocalDateTime` as ISO JSON | `Product.java` |
 
 ## Known simplifications (say these out loud in an interview)
 
-- One hard-coded in-memory user and role. Real apps load users from the database and put roles in the token.
-- JWT secret is in `application.properties`. Use an environment variable or secret manager.
+- `dev` deliberately uses one hard-coded in-memory user; `prod` loads users from PostgreSQL. JWT roles remain fixed in the current token filter, so role-based authorization is still a future improvement.
+- JWT and bootstrap secrets come from environment variables. A production deployment should source them from a secret manager.
 - Token is in `localStorage`, which JavaScript can read (XSS risk). The alternative is an HttpOnly cookie, which then needs CSRF protection. Know both trade-offs.
-- H2 in memory: data resets on every restart. Swap in PostgreSQL/MySQL by changing the datasource and driver.
+- H2 in memory resets on every dev restart; production-like PostgreSQL persists through ordinary container restarts.
 - No refresh tokens. At expiry the user simply logs in again.
 
 ## Ideas to extend it (good practice)

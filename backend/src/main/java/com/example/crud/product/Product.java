@@ -17,12 +17,13 @@ public class Product {
     @Column(length = 500)
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
     @Column(nullable = false)
     private int quantity;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

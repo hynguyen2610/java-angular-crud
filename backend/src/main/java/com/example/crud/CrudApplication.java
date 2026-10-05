@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 @SpringBootApplication
 public class CrudApplication {
@@ -17,6 +18,7 @@ public class CrudApplication {
 
     /** Seeds 12 products so pagination and search are visible right away. */
     @Bean
+    @Profile("dev")
     CommandLineRunner seed(ProductRepository repo) {
         return args -> {
             String[] names = {"Laptop", "Phone", "Tablet", "Monitor", "Keyboard", "Mouse",

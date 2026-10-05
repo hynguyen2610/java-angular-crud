@@ -11,11 +11,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,16 +25,25 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter,
+            @Value("${app.security.h2-console-enabled:false}") boolean h2ConsoleEnabled) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())                       // stateless API + bearer token: no CSRF cookie
                 .cors(Customizer.withDefaults())                    // uses corsConfigurationSource() below
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(h -> h.frameOptions(f -> f.sameOrigin()))  // lets the H2 console render
+                .headers(h -> {
+                    if (h2ConsoleEnabled) {
+                        h.frameOptions(f -> f.sameOrigin());
+                    }
+                })
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-                .authorizeHttpRequests(a -> a
-                        .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(a -> {
+                    a.requestMatchers("/api/auth/**", "/actuator/health").permitAll();
+                    if (h2ConsoleEnabled) {
+                        a.requestMatchers("/h2-console/**").permitAll();
+                    }
+                    a.anyRequest().authenticated();
+                })
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -56,13 +62,6 @@ public class SecurityConfig {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    /** Demo user: admin / admin123. Replace with a JPA-backed UserDetailsService in real apps. */
-    @Bean
-    UserDetailsService users(PasswordEncoder encoder) {
-        return new InMemoryUserDetailsManager(
-                User.withUsername("admin").password(encoder.encode("admin123")).roles("ADMIN").build());
     }
 
     @Bean

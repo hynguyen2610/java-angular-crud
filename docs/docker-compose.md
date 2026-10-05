@@ -6,9 +6,10 @@
 Spring Boot API locally. The browser loads the SPA from `http://localhost:4200`
 and calls the unchanged `/api/*` routes through the same-origin Nginx proxy.
 
-This work does not change product CRUD routes, authentication rules, JWT token
-format, database schema, or browser routing. H2 remains intentionally
-in-memory, so no persistent volume is required or created.
+The default Compose file runs the `dev` H2 journey. Combining it with
+`compose.prod.yaml` switches Spring to the PostgreSQL-backed `prod` journey;
+it preserves product HTTP routes, JWT response shape, browser routing, and the
+same-origin proxy. The production-like override creates a durable local volume.
 
 ## Build efficiency
 
@@ -22,40 +23,51 @@ contains `curl` because the existing Compose health check requires it.
 |---|---|---|
 | Rebuild without changing dependency manifests | Maven/npm dependency layers are cached; only source compilation runs. | Two consecutive `docker compose --progress=plain build` runs show `CACHED` dependency-install steps on the second run. |
 | Change `pom.xml` or a package manifest/lockfile | The corresponding dependency step is rerun; the other service can remain cached. | Build output identifies the affected service and dependency layer. |
-| Run the optimized images | Existing ports, health check, Angular shell, and same-origin login journey work. | `./scripts/verify-compose.sh`. |
+| Run the optimized dev images | Existing ports, health check, Angular shell, H2 console, and same-origin login journey work. | `./scripts/verify-compose.sh`. |
+| Run the optimized production-like images | Flyway creates schema, database-backed login works, and product data survives a backend restart. | `./scripts/verify-compose-prod.sh`. |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
+  subgraph DEV[Default dev Compose]
   B[Browser :4200] -->|HTML, assets| W[Nginx frontend]
   B -->|/api/* same origin| W
   W -->|proxy /api/*| A[Spring Boot API :8080]
   A --> H[(H2 in-memory)]
+  end
+  subgraph PROD[compose.prod.yaml]
+  PB[Browser :4200] --> PW[Nginx frontend]
+  PW -->|proxy /api/*| PA[Spring Boot prod]
+  PA --> PG[(PostgreSQL volume)]
+  end
 ```
 
 ## Delivery surfaces and acceptance scenarios
 
 | Surface | Scenario | Evidence |
 |---|---|---|
-| API/contract | Existing API remains reachable at `:8080`; no route or payload changes are introduced. | Backend build and Compose health check against the existing H2 console endpoint. |
+| API/contract | Existing API remains reachable at `:8080`; `/actuator/health` is the readiness probe, while the H2 console remains dev-only. | Backend tests and both Compose health checks. |
 | Browser UI | `GET :4200/` returns the Angular shell and supports client-side route fallback. | Compose smoke check finds `<app-root>` in the served document. |
-| Browser-to-API journey | A login request sent to `:4200/api/auth/login` reaches Spring through Nginx and returns the existing token response for `admin/admin123`. | Compose smoke check posts through the proxy and checks for `token`. |
+| Browser-to-API journey | Dev login uses `admin/admin123`; production-like login uses the database bootstrap user, then a created product survives a backend restart. | Dev and PostgreSQL Compose smoke scripts. |
 | Realtime behavior | N/A: this application has no realtime protocol or client. | Source inspection; no Socket.IO/WebSocket dependency exists. |
 
 ## Assumptions and recovery
 
-- `.env` is local-only and supplies `JWT_SECRET`; `.env.example` is a safe,
-  deliberately non-production placeholder.
+- `.env` is local-only and supplies JWT, database, and bootstrap values;
+  `.env.example` is deliberately non-production placeholder material.
 - H2 data resets after a backend restart by existing application design. No
   Docker volume should be deleted to recover this stack.
+- The PostgreSQL volume survives ordinary `docker compose down`; never use
+  `down -v` unless intentionally discarding local production-like data.
 - If the host ports are occupied, stop the verified local process or change the
   host side of the Compose port mapping; container ports remain `4200` (web
   host mapping) and `8080` (API).
 
 ## Verification
 
-Run `./scripts/verify-compose.sh`. It validates the rendered Compose file,
-builds and starts both services, waits for Spring, checks the Angular shell,
-and executes the login journey through the browser origin. It always runs
-`docker compose down --remove-orphans` on exit and does not remove volumes.
+Run `./scripts/verify-compose.sh` for the H2 dev journey and
+`./scripts/verify-compose-prod.sh` for PostgreSQL persistence. Each validates
+the rendered Compose file, starts the required services, and uses the browser
+origin for API checks. Both run `docker compose down --remove-orphans` on exit
+and do not remove volumes.

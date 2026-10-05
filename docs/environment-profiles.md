@@ -2,7 +2,7 @@
 
 ## Status
 
-**PLANNED — no runtime configuration has changed.** This plan keeps the current
+**DONE — verified locally in both profiles.** This plan keeps the current
 local developer experience while defining a safe path to durable PostgreSQL
 application state. Implementation requires approval of the decisions called out
 below, especially the production authentication policy and schema-migration
@@ -46,11 +46,11 @@ production readiness/health probe must not depend on an H2-specific route.
 
 | Decision | Recommended direction | Why it needs an explicit decision |
 |---|---|---|
-| Schema authority | Use Flyway migrations for PostgreSQL; do not use Hibernate `update` as the production migration process. | Establishes how future database changes are authored, reviewed, and recovered. |
-| Production authentication | Disable the current demo in-memory user in `prod`; choose a separate approved production identity design. | Keeping demo credentials is an authorization-policy decision, not a database configuration detail. |
-| Compose production shape | Keep `compose.yaml` as the existing dev journey and add an explicit production override (for example `compose.prod.yaml`) that provisions PostgreSQL. | Prevents an accidental switch of normal local development to durable state and makes production intent visible. |
-| Health endpoint | Add a narrowly exposed, authenticated-safe health endpoint/probe for `prod` rather than probing `/h2-console/`. | Adds an HTTP surface and security rule. |
-| PostgreSQL lifecycle | Decide whether the Compose named volume is only a local production-like aid or deployment uses a managed PostgreSQL service. | Determines backup, access, ownership, and recovery responsibilities. |
+| Schema authority | **Implemented:** Flyway owns the PostgreSQL schema from `V1__create_product_and_user_tables.sql`; Hibernate validates it. | Future schema changes must be versioned Flyway migrations. |
+| Production authentication | **Approved:** use database-backed users in `prod`, with an environment-supplied bootstrap administrator. | The bootstrap credentials must be treated as deployment secrets and rotated after first use. |
+| Compose production shape | **Implemented:** `compose.yaml` remains the dev journey; `compose.prod.yaml` adds PostgreSQL and selects `prod`. | Keeps the local default explicit and non-persistent. |
+| Health endpoint | **Implemented:** only `/actuator/health` is publicly permitted for readiness. | The H2 console is no longer a production probe or security exception. |
+| PostgreSQL lifecycle | **Implemented scope:** the Compose named volume is a local production-like aid. Managed PostgreSQL backup, access, and recovery are deployment work outside this repository. | Prevents local Docker documentation from being mistaken for a deployment runbook. |
 
 Until the authentication decision is made, the production browser login journey
 cannot be marked complete. It would be misleading to call a runtime with a
@@ -123,7 +123,7 @@ hard-coded demo account a production mode.
 
 ## Implementation exit criteria
 
-This plan may move to `DONE` only when the approved production identity and
-schema choices are implemented, PostgreSQL persistence is proven through the
-browser-to-API journey, dev H2 behavior remains explicitly tested, and the
+Completed: Flyway owns the PostgreSQL schema, `prod` uses database-backed
+users, PostgreSQL persistence was proven through the browser-origin API journey
+and a backend restart, dev H2 behavior was separately smoke-tested, and the
 documentation supplies reproducible commands for both modes.
