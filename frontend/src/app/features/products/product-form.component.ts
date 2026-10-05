@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/http-error';
 import { ProductService } from './product.service';
+import { applyProductServerErrors, productValidators } from './product-validation';
 
 @Component({
   selector: 'app-product-form',
@@ -34,7 +35,7 @@ import { ProductService } from './product.service';
         </label>
 
         <label>Quantity
-          <input type="number" formControlName="quantity" />
+          <input type="number" step="1" formControlName="quantity" />
           @if (form.controls.quantity.touched && form.controls.quantity.errors; as e) {
             <small class="err">{{ e['server'] ?? 'Quantity must be 0 or more' }}</small>
           }
@@ -59,10 +60,10 @@ export class ProductFormComponent implements OnInit {
   error = signal<string | null>(null);
 
   form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    description: ['', Validators.maxLength(500)],
-    price: [0, [Validators.required, Validators.min(0)]],
-    quantity: [0, [Validators.required, Validators.min(0)]],
+    name: ['', productValidators.name],
+    description: ['', productValidators.description],
+    price: [0, productValidators.price],
+    quantity: [0, productValidators.quantity],
   });
 
   // Inputs/route params are ready in ngOnInit (not in the constructor)
@@ -98,9 +99,7 @@ export class ProductFormComponent implements OnInit {
   /** Spring's ApiError.errors is { fieldName: message }: attach each to its form control. */
   private showServerErrors(err: unknown) {
     if (err instanceof HttpErrorResponse && err.status === 400 && err.error?.errors) {
-      for (const [field, msg] of Object.entries(err.error.errors)) {
-        this.form.get(field)?.setErrors({ server: msg });
-      }
+      applyProductServerErrors(this.form, err.error.errors);
     }
     this.error.set(errorMessage(err));
   }
