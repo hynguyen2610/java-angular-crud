@@ -3,11 +3,11 @@ package com.example.crud.product;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.TestConstructor;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -15,10 +15,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class ProductControllerValidationTest {
 
-    @Autowired MockMvc mvc;
-    @Autowired ObjectMapper objectMapper;
+    private final MockMvc mvc;
+    private final ObjectMapper objectMapper;
+
+    ProductControllerValidationTest(MockMvc mvc, ObjectMapper objectMapper) {
+        this.mvc = mvc;
+        this.objectMapper = objectMapper;
+    }
 
     @Test
     void returnsAFieldErrorForAMalformedNumericProductValue() throws Exception {
