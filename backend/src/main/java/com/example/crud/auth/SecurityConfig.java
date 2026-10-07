@@ -38,7 +38,7 @@ public class SecurityConfig {
                 })
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(a -> {
-                    a.requestMatchers("/api/auth/**", "/actuator/health").permitAll();
+                    a.requestMatchers("/api/auth/**", "/actuator/health", "/ws/**").permitAll();
                     if (h2ConsoleEnabled) {
                         a.requestMatchers("/h2-console/**").permitAll();
                     }

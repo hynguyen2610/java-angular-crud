@@ -1,6 +1,7 @@
 package com.example.crud.product;
 
 import com.example.crud.error.NotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -12,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
     private final ProductRepository repo;
+    private final ApplicationEventPublisher events;
 
-    public ProductService(ProductRepository repo) {
+    public ProductService(ProductRepository repo, ApplicationEventPublisher events) {
         this.repo = repo;
+        this.events = events;
     }
 
     public PageResponse<ProductDto> list(String q, int page, int size) {
@@ -34,19 +37,24 @@ public class ProductService {
     public ProductDto create(ProductDto dto) {
         Product p = new Product();
         apply(p, dto);
-        return ProductDto.from(repo.save(p));
+        Product saved = repo.save(p);
+        publish("product.created", saved);
+        return ProductDto.from(saved);
     }
 
     @Transactional
     public ProductDto update(Long id, ProductDto dto) {
         Product p = find(id);
         apply(p, dto);
+        publish("product.updated", p);
         return ProductDto.from(p); // dirty checking saves it on commit
     }
 
     @Transactional
     public void delete(Long id) {
-        repo.delete(find(id));
+        Product p = find(id);
+        repo.delete(p);
+        publish("product.deleted", p);
     }
 
     private Product find(Long id) {
@@ -58,5 +66,11 @@ public class ProductService {
         p.setDescription(dto.description());
         p.setPrice(dto.price());
         p.setQuantity(dto.quantity());
+    }
+
+    private void publish(String type, Product product) {
+        String actorUsername = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        events.publishEvent(ProductLifecycleEvent.now(type, product.getId(), product.getName(), actorUsername));
     }
 }
