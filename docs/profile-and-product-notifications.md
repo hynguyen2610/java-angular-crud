@@ -1,4 +1,4 @@
-# Profile editing and product lifecycle notifications — proposed specification
+# Profile editing and product lifecycle notifications — specification
 
 ## Status
 
@@ -12,7 +12,7 @@ An authenticated user can view and update their own profile. Authenticated users
 
 The work preserves the existing product CRUD URLs, request/response JSON, JWT bearer authentication, role behavior, proxy topology, and database profiles. It does not add email/push notifications, notification persistence or history, user administration, password reset, or a global audit log.
 
-## Decisions required before implementation
+## Approved delivery decisions
 
 | Decision | Recommended initial scope | Why approval is needed |
 |---|---|---|
