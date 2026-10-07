@@ -3,6 +3,9 @@ info:
   title: Product Manager API
   version: 1.0.0
   description: Profile endpoints for the authenticated Product Manager user.
+servers:
+  - url: /
+    description: Same-origin deployment
 paths:
   /api/auth/me:
     get:
