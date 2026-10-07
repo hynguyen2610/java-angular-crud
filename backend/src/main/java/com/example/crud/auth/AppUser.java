@@ -44,4 +44,8 @@ public class AppUser {
     public String getRole() {
         return role;
     }
+
+    public void rename(String username) {
+        this.username = username;
+    }
 }

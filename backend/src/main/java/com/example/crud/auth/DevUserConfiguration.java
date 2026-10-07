@@ -13,7 +13,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 class DevUserConfiguration {
 
     @Bean
-    UserDetailsService users(PasswordEncoder encoder) {
+    InMemoryUserDetailsManager users(PasswordEncoder encoder) {
         return new InMemoryUserDetailsManager(
                 User.withUsername("admin").password(encoder.encode("admin123")).roles("ADMIN").build());
     }

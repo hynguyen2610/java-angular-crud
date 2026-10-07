@@ -14,6 +14,7 @@ import { ThemeService } from './core/theme.service';
       <span class="spacer"></span>
       <button (click)="theme.toggle()">{{ theme.theme() === 'dark' ? 'Light' : 'Dark' }} mode</button>
       @if (auth.isLoggedIn()) {
+        <a routerLink="/profile">Profile</a>
         <button (click)="auth.logout()">Logout</button>
       }
     </header>
