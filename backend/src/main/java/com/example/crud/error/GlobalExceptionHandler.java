@@ -1,6 +1,7 @@
 package com.example.crud.error;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.example.crud.auth.UsernameAlreadyUsedException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -38,6 +39,12 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> status(ResponseStatusException e) {
         int code = e.getStatusCode().value();
         return ResponseEntity.status(code).body(new ApiError(code, e.getReason(), Map.of()));
+    }
+
+    @ExceptionHandler(UsernameAlreadyUsedException.class)
+    ResponseEntity<ApiError> usernameAlreadyUsed(UsernameAlreadyUsedException e) {
+        return ResponseEntity.status(409).body(new ApiError(409, e.getMessage(),
+                Map.of("username", e.getMessage())));
     }
 
     private String fieldName(HttpMessageNotReadableException e) {
