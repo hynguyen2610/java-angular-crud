@@ -3,10 +3,11 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth.service';
 import { BackendReadinessService } from './core/backend-readiness.service';
 import { ThemeService } from './core/theme.service';
+import { NotificationCenterComponent } from './core/notification-center.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, NotificationCenterComponent],
   template: `
     <header>
       <strong>Product Manager</strong>
@@ -21,6 +22,7 @@ import { ThemeService } from './core/theme.service';
     @if (!backend.ready()) {
       <p class="backend-starting" role="status">Starting server…</p>
     }
+    <app-notification-center />
     <main><router-outlet /></main>
   `,
 })
