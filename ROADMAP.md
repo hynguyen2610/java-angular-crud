@@ -7,7 +7,7 @@
 | Reproducible local stack | DONE | `docker compose config`, both Docker image builds, and the Compose browser-to-API smoke check are green. | [Docker Compose specification](docs/docker-compose.md) |
 | Development H2 and production PostgreSQL profiles | DONE | Both isolated Compose journeys passed: dev H2 console/demo login, plus Flyway PostgreSQL/database login/product persistence after backend restart. | [Environment profile plan](docs/environment-profiles.md) |
 | Frontend backend readiness | IN PROGRESS | Isolated Compose proved the shell while Spring was starting (`503` health), then `UP` and same-origin login. Focused Karma browser evidence remains inconclusive. | [Backend-readiness specification](docs/backend-readiness.md) |
-| Profile editing and product lifecycle notifications | IN PROGRESS | Profile API/UI and authenticated create/update/delete STOMP notices are merged; backend tests, TypeScript checks, and the production build are green. Browser-test completion evidence remains inconclusive. | [Specification](docs/profile-and-product-notifications.md) |
+| Profile identity, display name, picture, and product lifecycle notifications | IN PROGRESS | Product lifecycle notices are in progress. Existing username-renaming profile behavior conflicts with the proposed immutable-username/display-name/picture revision; no picture-storage, browser, or migration evidence exists yet. | [Specification](docs/profile-and-product-notifications.md) |
 
 `DONE` requires the evidence named in its row. The in-memory H2 database is an
 intentional local-development simplification, not persistent application state.
