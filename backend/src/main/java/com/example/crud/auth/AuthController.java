@@ -18,6 +18,9 @@ public class AuthController {
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {}
 
     public record LoginResponse(String token, String username) {}
+    public record PasswordConfirmation(@NotBlank String password) {}
+    public record UsernameRequest(@NotBlank String username) {}
+    public record CeremonyResponse(@NotBlank String ceremonyId, @NotBlank String response) {}
 
     public record ProfileRequest(
             @NotBlank(message = "Username is required")
@@ -28,11 +31,13 @@ public class AuthController {
     private final AuthenticationManager authManager;
     private final JwtService jwt;
     private final ProfileService profiles;
+    private final PasskeyService passkeys;
 
-    public AuthController(AuthenticationManager authManager, JwtService jwt, ProfileService profiles) {
+    public AuthController(AuthenticationManager authManager, JwtService jwt, ProfileService profiles, PasskeyService passkeys) {
         this.authManager = authManager;
         this.jwt = jwt;
         this.profiles = profiles;
+        this.passkeys = passkeys;
     }
 
     @PostMapping("/login")
@@ -43,6 +48,30 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
         return new LoginResponse(jwt.generate(req.username()), req.username());
+    }
+
+    @PostMapping("/passkey/registration/options")
+    public PasskeyService.CeremonyOptions registrationOptions(Authentication authentication,
+            @Valid @RequestBody PasswordConfirmation request) {
+        return passkeys.registrationOptions(authentication.getName(), request.password());
+    }
+
+    @PostMapping("/passkey/registration/verify")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void verifyRegistration(Authentication authentication, @Valid @RequestBody CeremonyResponse request) {
+        passkeys.finishRegistration(authentication.getName(), request.ceremonyId(), request.response());
+    }
+
+    @PostMapping("/passkey/assertion/options")
+    public PasskeyService.CeremonyOptions assertionOptions(@Valid @RequestBody UsernameRequest request) {
+        return passkeys.assertionOptions(request.username());
+    }
+
+    @PostMapping("/passkey/assertion/verify")
+    public LoginResponse verifyAssertion(@RequestParam @NotBlank String username,
+            @Valid @RequestBody CeremonyResponse request) {
+        String verifiedUsername = passkeys.finishAssertion(username, request.ceremonyId(), request.response());
+        return new LoginResponse(jwt.generate(verifiedUsername), verifiedUsername);
     }
 
     @GetMapping("/me")

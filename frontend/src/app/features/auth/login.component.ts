@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { BackendReadinessService } from '../../core/backend-readiness.service';
 import { errorMessage } from '../../core/http-error';
+import { PasskeyService } from '../../core/passkey.service';
 
 @Component({
   selector: 'app-login',
@@ -20,6 +21,11 @@ import { errorMessage } from '../../core/http-error';
         <button class="primary" [disabled]="form.invalid || loading() || !backend.ready()">
           {{ !backend.ready() ? 'Server starting…' : loading() ? 'Signing in...' : 'Sign in' }}
         </button>
+        @if (passkeys.supported()) {
+          <button type="button" class="btn" (click)="signInWithPasskey()" [disabled]="form.controls.username.invalid || loading() || !backend.ready()">
+            Sign in with Touch ID / passkey
+          </button>
+        }
       </form>
     </div>
   `,
@@ -27,6 +33,7 @@ import { errorMessage } from '../../core/http-error';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
+  protected passkeys = inject(PasskeyService);
   protected backend = inject(BackendReadinessService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -54,6 +61,21 @@ export class LoginComponent {
         this.loading.set(false);
         this.error.set(errorMessage(err));
       },
+    });
+  }
+
+  signInWithPasskey() {
+    const username = this.form.controls.username.value;
+    if (!username || !this.backend.ready()) return;
+    this.loading.set(true);
+    this.error.set(null);
+    this.passkeys.login(username).subscribe({
+      next: response => {
+        this.auth.acceptLogin(response);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/products';
+        this.router.navigateByUrl(returnUrl);
+      },
+      error: err => { this.loading.set(false); this.error.set(errorMessage(err)); },
     });
   }
 }

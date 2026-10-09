@@ -12,9 +12,11 @@ import org.springframework.stereotype.Service;
 class DevProfileService implements ProfileService {
 
     private final InMemoryUserDetailsManager users;
+    private final PasskeyService passkeys;
 
-    DevProfileService(InMemoryUserDetailsManager users) {
+    DevProfileService(InMemoryUserDetailsManager users, PasskeyService passkeys) {
         this.users = users;
+        this.passkeys = passkeys;
     }
 
     @Override
@@ -32,6 +34,7 @@ class DevProfileService implements ProfileService {
         if (!authenticatedUsername.equals(username)) {
             users.deleteUser(authenticatedUsername);
             users.createUser(User.withUserDetails(existing).username(username).build());
+            passkeys.renameUsername(authenticatedUsername, username);
         }
         return new Profile(username);
     }

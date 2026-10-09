@@ -27,11 +27,13 @@ class ProfileControllerTest {
     private final MockMvc mvc;
     private final ObjectMapper objectMapper;
     private final InMemoryUserDetailsManager users;
+    private final PasskeyCredentialRepository passkeys;
 
-    ProfileControllerTest(MockMvc mvc, ObjectMapper objectMapper, InMemoryUserDetailsManager users) {
+    ProfileControllerTest(MockMvc mvc, ObjectMapper objectMapper, InMemoryUserDetailsManager users, PasskeyCredentialRepository passkeys) {
         this.mvc = mvc;
         this.objectMapper = objectMapper;
         this.users = users;
+        this.passkeys = passkeys;
     }
 
     @Test
@@ -65,6 +67,21 @@ class ProfileControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"editor\",\"password\":\"admin123\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void movesThePasskeyToTheNewUsernameWhenTheProfileIsRenamed() throws Exception {
+        passkeys.save(new PasskeyCredential("admin", new byte[] { 1 }, new byte[] { 2 }, new byte[] { 3 }, 0));
+        String token = loginToken("admin");
+
+        mvc.perform(put("/api/auth/me")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"editor\"}"))
+                .andExpect(status().isOk());
+
+        org.junit.jupiter.api.Assertions.assertTrue(passkeys.findByUsername("admin").isEmpty());
+        org.junit.jupiter.api.Assertions.assertTrue(passkeys.findByUsername("editor").isPresent());
     }
 
     @Test

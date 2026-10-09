@@ -7,6 +7,44 @@ servers:
   - url: /
     description: Same-origin deployment
 paths:
+  /api/auth/passkey/registration/options:
+    post:
+      operationId: startPasskeyRegistration
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PasswordConfirmation' } } } }
+      responses:
+        '200': { description: WebAuthn creation ceremony, content: { application/json: { schema: { $ref: '#/components/schemas/PasskeyCeremony' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { description: A passkey is already registered }
+  /api/auth/passkey/registration/verify:
+    post:
+      operationId: finishPasskeyRegistration
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PasskeyCeremonyResponse' } } } }
+      responses:
+        '204': { description: The one permitted credential was stored }
+        '400': { description: Invalid, expired, or replayed ceremony }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { description: A passkey is already registered }
+  /api/auth/passkey/assertion/options:
+    post:
+      operationId: startPasskeyAssertion
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UsernameRequest' } } } }
+      responses:
+        '200': { description: WebAuthn assertion ceremony, content: { application/json: { schema: { $ref: '#/components/schemas/PasskeyCeremony' } } } }
+        '400': { description: Generic failure; does not reveal account or passkey state }
+  /api/auth/passkey/assertion/verify:
+    post:
+      operationId: finishPasskeyAssertion
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 100 }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PasskeyCeremonyResponse' } } } }
+      responses:
+        '200': { description: JWT login result, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '401': { description: Generic assertion verification failure }
   /api/auth/me:
     get:
       operationId: getCurrentProfile
@@ -69,6 +107,31 @@ components:
           schema:
             $ref: '#/components/schemas/ApiError'
   schemas:
+    PasswordConfirmation:
+      type: object
+      required: [password]
+      properties: { password: { type: string, minLength: 1 } }
+    UsernameRequest:
+      type: object
+      required: [username]
+      properties: { username: { type: string, minLength: 1, maxLength: 100 } }
+    PasskeyCeremony:
+      type: object
+      required: [ceremonyId, publicKey]
+      properties:
+        ceremonyId: { type: string, format: uuid }
+        publicKey:
+          type: object
+          description: WebAuthn options with challenge, rp, and user fields directly inside this object; it is not wrapped in a second publicKey property.
+          additionalProperties: true
+    PasskeyCeremonyResponse:
+      type: object
+      required: [ceremonyId, response]
+      properties: { ceremonyId: { type: string, format: uuid }, response: { type: string, description: Serialized WebAuthn credential response } }
+    LoginResponse:
+      type: object
+      required: [token, username]
+      properties: { token: { type: string }, username: { type: string } }
     Profile:
       type: object
       required: [username]

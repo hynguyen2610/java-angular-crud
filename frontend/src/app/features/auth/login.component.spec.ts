@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { BackendReadinessService } from '../../core/backend-readiness.service';
 import { AuthService } from '../../core/auth.service';
 import { LoginComponent } from './login.component';
+import { PasskeyService } from '../../core/passkey.service';
 
 describe('LoginComponent backend readiness', () => {
   let fixture: ComponentFixture<LoginComponent>;
@@ -15,6 +16,7 @@ describe('LoginComponent backend readiness', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: { login: () => of(void 0) } },
+        { provide: PasskeyService, useValue: { supported: () => true } },
         { provide: BackendReadinessService, useValue: { ready: signal(false) } },
       ],
     });
@@ -26,6 +28,7 @@ describe('LoginComponent backend readiness', () => {
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
 
     expect(fixture.nativeElement.textContent).toContain('Starting server');
+    expect(fixture.nativeElement.textContent).toContain('Touch ID / passkey');
     expect(button.disabled).toBeTrue();
   });
 });

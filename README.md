@@ -57,6 +57,9 @@ cp .env.example .env && docker compose -f compose.yaml -f compose.prod.yaml up -
 
 Before using this outside local testing, replace the example values for
 `JWT_SECRET`, `POSTGRES_PASSWORD`, and `BOOTSTRAP_ADMIN_PASSWORD` in `.env`.
+For passkeys, set `WEBAUTHN_RP_ID` to the browser host and
+`WEBAUTHN_ORIGINS` to its exact HTTPS origin. WebAuthn accepts `localhost` for
+local development, but a deployed host must use HTTPS.
 
 Sign in with `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD` from
 `.env`. The bootstrap account is inserted only when its username does not

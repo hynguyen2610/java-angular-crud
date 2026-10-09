@@ -18,8 +18,10 @@ export class AuthService {
   login(username: string, password: string) {
     return this.http
       .post<LoginResponse>(`${this.api}/auth/login`, { username, password })
-      .pipe(tap(res => this.store(res.token)));
+      .pipe(tap(res => this.acceptLogin(res)));
   }
+
+  acceptLogin(response: LoginResponse) { this.store(response.token); }
 
   logout() {
     this.store(null);

@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 class DatabaseProfileService implements ProfileService {
 
     private final AppUserRepository users;
+    private final PasskeyService passkeys;
 
-    DatabaseProfileService(AppUserRepository users) {
+    DatabaseProfileService(AppUserRepository users, PasskeyService passkeys) {
         this.users = users;
+        this.passkeys = passkeys;
     }
 
     @Override
@@ -28,6 +30,7 @@ class DatabaseProfileService implements ProfileService {
             throw new UsernameAlreadyUsedException();
         }
         user.rename(username);
+        passkeys.renameUsername(authenticatedUsername, username);
         return new Profile(user.getUsername());
     }
 

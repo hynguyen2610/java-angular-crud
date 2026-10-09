@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { ProfileService } from '../../core/profile.service';
 import { ProfileComponent } from './profile.component';
+import { PasskeyService } from '../../core/passkey.service';
 
 describe('ProfileComponent', () => {
   let fixture: ComponentFixture<ProfileComponent>;
@@ -14,17 +15,23 @@ describe('ProfileComponent', () => {
     update: jasmine.createSpy('update'),
   };
   const auth = { logout: jasmine.createSpy('logout') };
+  const passkeys = {
+    supported: () => true,
+    register: jasmine.createSpy('register'),
+  };
 
   beforeEach(() => {
     profiles.get.and.returnValue(of({ username: 'admin' }));
     profiles.update.calls.reset();
     auth.logout.calls.reset();
+    passkeys.register.calls.reset();
     TestBed.configureTestingModule({
       imports: [ProfileComponent],
       providers: [
         provideRouter([]),
         { provide: ProfileService, useValue: profiles },
         { provide: AuthService, useValue: auth },
+        { provide: PasskeyService, useValue: passkeys },
       ],
     });
     fixture = TestBed.createComponent(ProfileComponent);
@@ -34,6 +41,7 @@ describe('ProfileComponent', () => {
 
   it('loads the current username', () => {
     expect(component.form.controls.username.value).toBe('admin');
+    expect(fixture.nativeElement.textContent).toContain('Register this Mac passkey');
   });
 
   it('keeps entered username and shows a duplicate error after a recoverable failure', () => {
@@ -58,5 +66,40 @@ describe('ProfileComponent', () => {
     component.submit();
 
     expect(auth.logout).toHaveBeenCalled();
+  });
+
+  it('keeps the password confirmation after a recoverable registration failure', () => {
+    component.passkeyPassword.setValue('wrong-password');
+    passkeys.register.and.returnValue(throwError(() => new HttpErrorResponse({ status: 401, error: { message: 'Incorrect password' } })));
+
+    component.registerPasskey();
+    fixture.detectChanges();
+
+    expect(component.passkeyPassword.value).toBe('wrong-password');
+    expect(fixture.nativeElement.textContent).toContain('Incorrect password');
+  });
+
+  it('shows the passkey service recovery guidance instead of a generic error', () => {
+    component.passkeyPassword.setValue('admin123');
+    passkeys.register.and.returnValue(throwError(() => ({
+      userMessage: 'Passkey request was cancelled or not allowed. Try again and approve the Touch ID prompt.',
+    })));
+
+    component.registerPasskey();
+    fixture.detectChanges();
+
+    expect(component.passkeyPassword.value).toBe('admin123');
+    expect(fixture.nativeElement.textContent).toContain('Passkey request was cancelled or not allowed');
+  });
+
+  it('reserves the generic fallback for an unclassified registration error', () => {
+    component.passkeyPassword.setValue('admin123');
+    passkeys.register.and.returnValue(throwError(() => new Error('unclassified')));
+
+    component.registerPasskey();
+    fixture.detectChanges();
+
+    expect(component.passkeyPassword.value).toBe('admin123');
+    expect(fixture.nativeElement.textContent).toContain('Unexpected error');
   });
 });
