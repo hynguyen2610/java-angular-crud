@@ -21,6 +21,11 @@ are BuildKit cache mounts, so a source-only rebuild reuses downloaded
 dependencies. The backend runtime uses the smaller Alpine JRE image; it still
 contains `curl` because the existing Compose health check requires it.
 
+The backend cache warm-up uses `dependency:resolve dependency:resolve-plugins`,
+not `dependency:go-offline`, so Maven respects Spring Boot's managed Jackson
+version when resolving the WebAuthn dependency graph. See
+[`docs/incidents/docker-maven-go-offline-jackson-range.md`](incidents/docker-maven-go-offline-jackson-range.md).
+
 | Build scenario | Expected cache behavior | Evidence |
 |---|---|---|
 | Rebuild without changing dependency manifests | Maven/npm dependency layers are cached; only source compilation runs. | Two consecutive `docker compose --progress=plain build` runs show `CACHED` dependency-install steps on the second run. |

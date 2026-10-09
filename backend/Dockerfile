@@ -4,7 +4,7 @@ WORKDIR /workspace
 
 COPY pom.xml .
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn --batch-mode --no-transfer-progress dependency:go-offline
+    mvn --batch-mode --no-transfer-progress dependency:resolve dependency:resolve-plugins
 
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 \
