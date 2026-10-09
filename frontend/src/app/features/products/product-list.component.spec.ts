@@ -85,4 +85,18 @@ describe('ProductListComponent sibling communication', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Delete failed');
   });
+
+  it('retries the current request from the table error state', () => {
+    productService.list.calls.reset();
+    productService.list.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 503,
+      error: { message: 'Products could not be loaded' },
+    })));
+    fixture.componentInstance.searchProducts('');
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('app-product-table [role="alert"] button') as HTMLButtonElement).click();
+
+    expect(productService.list).toHaveBeenCalledTimes(2);
+  });
 });

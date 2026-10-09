@@ -21,6 +21,7 @@ const PAGE_SIZE = 5;
       [error]="error()"
       (deleteRequested)="remove($event)"
       (pageRequested)="goTo($event)"
+      (refreshRequested)="reload()"
     />
   `,
 })
@@ -62,6 +63,10 @@ export class ProductListComponent {
 
   searchProducts(query: string) {
     this.params$.next({ q: query, page: 0 });
+  }
+
+  reload() {
+    this.params$.next(this.params$.value);
   }
 
   remove(p: Product) {
