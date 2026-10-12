@@ -23,6 +23,11 @@ application is served by Nginx; Nginx proxies `/api/*` to Spring Boot, so the
 browser remains on one origin. The API and H2 console are also available at
 `http://localhost:8080` and `http://localhost:8080/h2-console`.
 
+When using the development profile, Actuator diagnostics are available only
+from this Mac on `http://localhost:8080/actuator/`: `health`, `metrics`,
+`info`, `env`, and `beans`. Environment values are redacted. Production keeps
+only the health endpoint exposed; see [local Actuator diagnostics](docs/local-actuator.md).
+
 To stop the stack, press `Ctrl+C`, or run:
 
 ```bash

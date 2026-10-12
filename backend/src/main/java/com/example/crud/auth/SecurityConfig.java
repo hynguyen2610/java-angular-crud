@@ -26,7 +26,8 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter,
-            @Value("${app.security.h2-console-enabled:false}") boolean h2ConsoleEnabled) throws Exception {
+            @Value("${app.security.h2-console-enabled:false}") boolean h2ConsoleEnabled,
+            @Value("${app.security.actuator-details-enabled:false}") boolean actuatorDetailsEnabled) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())                       // stateless API + bearer token: no CSRF cookie
                 .cors(Customizer.withDefaults())                    // uses corsConfigurationSource() below
@@ -38,7 +39,12 @@ public class SecurityConfig {
                 })
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(a -> {
-                    a.requestMatchers("/api/auth/login", "/api/auth/passkey/assertion/**", "/actuator/health", "/ws/**").permitAll();
+                    a.requestMatchers("/api/auth/login", "/api/auth/passkey/assertion/**", "/ws/**").permitAll();
+                    if (actuatorDetailsEnabled) {
+                        a.requestMatchers("/actuator/**").permitAll();
+                    } else {
+                        a.requestMatchers("/actuator/health").permitAll();
+                    }
                     if (h2ConsoleEnabled) {
                         a.requestMatchers("/h2-console/**").permitAll();
                     }
