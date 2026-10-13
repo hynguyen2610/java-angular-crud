@@ -41,7 +41,14 @@ td:last-child { display: flex; align-items: center; gap: var(--space-2); }
 .toolbar { display: flex; gap: var(--space-3); margin-bottom: var(--space-4); }
 .toolbar input { flex: 1; }
 .pager { display: flex; gap: var(--space-3); align-items: center; justify-content: center; margin-top: var(--space-4); color: var(--color-muted); text-align: center; }
+.product-grid-shell { display: grid; gap: var(--space-4); }
+.product-grid-views { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-2); }
+.product-grid-views label { margin: 0; }
+.product-grid-views input { width: min(100%, 14rem); }
+.product-grid { width: 100%; height: min(34rem, 65vh); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.grid-actions { display: flex; align-items: center; gap: var(--space-2); height: 100%; }
+.grid-actions button { min-height: 2.25rem; padding: var(--space-1) var(--space-2); }
 .card { max-width: 32rem; margin: 0 auto; padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); }
 .card h2 { margin: 0 0 var(--space-6); font-size: var(--text-xl); }
 .card hr { margin: var(--space-6) 0; border: 0; border-top: 1px solid var(--color-border); }
-@media (max-width: 48rem) { header { flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); } header strong { flex-basis: 100%; } header .spacer { display: none; } main { margin: var(--space-4) auto; } .toolbar { align-items: stretch; flex-direction: column; } .toolbar .btn { width: 100%; } .pager { flex-wrap: wrap; } .card { padding: var(--space-4); } .empty-state { padding: var(--space-6) var(--space-4); } }
+@media (max-width: 48rem) { header { flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); } header strong { flex-basis: 100%; } header .spacer { display: none; } main { margin: var(--space-4) auto; } .toolbar { align-items: stretch; flex-direction: column; } .toolbar .btn { width: 100%; } .pager { flex-wrap: wrap; } .product-grid-views { align-items: stretch; flex-direction: column; } .product-grid-views input, .product-grid-views button { width: 100%; } .product-grid { height: 28rem; } .card { padding: var(--space-4); } .empty-state { padding: var(--space-6) var(--space-4); } }

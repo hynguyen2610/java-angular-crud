@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Page, Product } from '../../core/models';
 import { ProductListComponent } from './product-list.component';
@@ -37,7 +38,7 @@ describe('ProductListComponent sibling communication', () => {
 
     TestBed.configureTestingModule({
       imports: [ProductListComponent],
-      providers: [{ provide: ProductService, useValue: productService }],
+      providers: [provideRouter([]), { provide: ProductService, useValue: productService }],
     });
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
@@ -64,7 +65,7 @@ describe('ProductListComponent sibling communication', () => {
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('app-product-table .danger') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('app-product-grid .danger') as HTMLButtonElement).click();
 
     expect(productService.delete).toHaveBeenCalledWith(desk.id);
     expect(productService.list).toHaveBeenCalledTimes(2);
@@ -80,7 +81,7 @@ describe('ProductListComponent sibling communication', () => {
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('app-product-table .danger') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('app-product-grid .danger') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Delete failed');
@@ -95,7 +96,7 @@ describe('ProductListComponent sibling communication', () => {
     fixture.componentInstance.searchProducts('');
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('app-product-table [role="alert"] button') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('app-product-grid [role="alert"] button') as HTMLButtonElement).click();
 
     expect(productService.list).toHaveBeenCalledTimes(2);
   });

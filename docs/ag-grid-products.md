@@ -119,3 +119,25 @@ The selected Community slice may begin without further product/API decisions.
 It remains bounded to browser-local views and the existing flat paged product
 list. Any future request for server-side sorting/filtering, grouping, pivoting,
 export, or shared views requires a new contract decision.
+
+## Implementation status — PARTIALLY VERIFIED
+
+The Community grid implementation replaces the native table with
+`ProductGridComponent`, retains the existing parent-owned search/delete/page
+flow, and adds a browser-local `ProductGridViewService`. AG Grid Community
+35.3.1 is installed because it is compatible with this Angular 19 checkout.
+
+| Scenario | Current evidence | Status |
+|---|---|---|
+| SC-1 existing API contract | No product HTTP client or Spring endpoint changed; application and spec TypeScript checks pass. | Static evidence only. |
+| SC-2 grid search/result display | Focused parent/grid specs were added; they cannot execute because Karma/esbuild deadlocks during `Building…`. | Not green. |
+| SC-3 virtual grid and UI states | Component implementation preserves loading, empty, and error/retry states. Responsive styles were added for the existing tokens. | Browser review required. |
+| SC-4 local saved views | Focused service/component specs cover save and corrupt-storage recovery; TypeScript checks pass. | Browser specs not green. |
+| SC-5 edit/delete | The grid action renderer retains edit links and delete output; parent spec was migrated. | Browser specs not green. |
+| SC-6 realtime notifications | Product notification service/protocol was not modified. | Source inspection only. |
+| SC-7 browser-to-API | No end-to-end runner is configured. | Manual authenticated journey required. |
+
+Verification run on 2026-10-13: `npx tsc --noEmit -p tsconfig.app.json` and
+`npx tsc --noEmit -p tsconfig.spec.json` passed. Focused Karma and
+`npm run build` both stopped in the known esbuild deadlock, so neither is
+browser/build success evidence.

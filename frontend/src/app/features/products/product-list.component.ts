@@ -5,17 +5,17 @@ import { errorMessage } from '../../core/http-error';
 import { Page, Product } from '../../core/models';
 import { ProductSearchToolbarComponent } from './product-search-toolbar.component';
 import { ProductService } from './product.service';
-import { ProductTableComponent } from './product-table.component';
+import { ProductGridComponent } from './product-grid.component';
 
 const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-product-list',
-  imports: [ProductSearchToolbarComponent, ProductTableComponent],
+  imports: [ProductSearchToolbarComponent, ProductGridComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-product-search-toolbar (searchChanged)="searchProducts($event)" />
-    <app-product-table
+    <app-product-grid
       [data]="data()"
       [loading]="loading()"
       [error]="error()"
