@@ -42,6 +42,20 @@ class ProfileControllerTest {
     }
 
     @Test
+    void recordsLogoutForTheAuthenticatedUser() throws Exception {
+        String token = loginToken("admin");
+
+        mvc.perform(post("/api/auth/logout").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void requiresAuthenticationToRecordLogout() throws Exception {
+        mvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void readsAndUpdatesTheAuthenticatedDevProfileThenRequiresTheNewUsername() throws Exception {
         String token = loginToken("admin");
 

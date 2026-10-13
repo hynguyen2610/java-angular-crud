@@ -7,6 +7,15 @@ servers:
   - url: /
     description: Same-origin deployment
 paths:
+  /api/auth/logout:
+    post:
+      operationId: recordLogout
+      summary: Record a client sign-out event
+      description: The server records the authenticated user's sign-out. JWTs are stateless, so this does not revoke the bearer token; the client removes it locally.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Sign-out event recorded }
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /api/auth/passkey/registration/options:
     post:
       operationId: startPasskeyRegistration

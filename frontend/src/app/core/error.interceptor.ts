@@ -1,10 +1,10 @@
-import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
+import { SKIP_AUTH_LOGOUT } from './auth-request-context';
 
-/** Opt out only for an authenticated action which handles a 401 locally. */
-export const SKIP_AUTH_LOGOUT = new HttpContextToken<boolean>(() => false);
+export { SKIP_AUTH_LOGOUT } from './auth-request-context';
 
 /** Global handling: an expired or invalid token (401) sends the user back to login. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {

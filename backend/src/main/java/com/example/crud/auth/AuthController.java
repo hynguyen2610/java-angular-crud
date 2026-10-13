@@ -10,10 +10,14 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.Authentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {}
 
@@ -45,8 +49,10 @@ public class AuthController {
         try {
             authManager.authenticate(new UsernamePasswordAuthenticationToken(req.username(), req.password()));
         } catch (AuthenticationException e) {
+            logger.warn("Authentication sign-in failed for username={} method=password", req.username());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
+        logger.info("Authentication sign-in succeeded for username={} method=password", req.username());
         return new LoginResponse(jwt.generate(req.username()), req.username());
     }
 
@@ -70,8 +76,21 @@ public class AuthController {
     @PostMapping("/passkey/assertion/verify")
     public LoginResponse verifyAssertion(@RequestParam @NotBlank String username,
             @Valid @RequestBody CeremonyResponse request) {
-        String verifiedUsername = passkeys.finishAssertion(username, request.ceremonyId(), request.response());
+        String verifiedUsername;
+        try {
+            verifiedUsername = passkeys.finishAssertion(username, request.ceremonyId(), request.response());
+        } catch (RuntimeException e) {
+            logger.warn("Authentication sign-in failed for username={} method=passkey", username);
+            throw e;
+        }
+        logger.info("Authentication sign-in succeeded for username={} method=passkey", verifiedUsername);
         return new LoginResponse(jwt.generate(verifiedUsername), verifiedUsername);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(Authentication authentication) {
+        logger.info("Authentication sign-out recorded for username={}", authentication.getName());
     }
 
     @GetMapping("/me")

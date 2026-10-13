@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs';
 import { LoginResponse } from './models';
 import { API_URL } from './tokens';
+import { logoutAuditContext } from './auth-request-context';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -24,6 +25,8 @@ export class AuthService {
   acceptLogin(response: LoginResponse) { this.store(response.token); }
 
   logout() {
+    this.http.post<void>(`${this.api}/auth/logout`, null, { context: logoutAuditContext() })
+      .subscribe({ error: () => undefined });
     this.store(null);
     this.router.navigateByUrl('/login');
   }
