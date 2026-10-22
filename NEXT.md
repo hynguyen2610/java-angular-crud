@@ -1,49 +1,48 @@
-# Next: PK1 single-passkey authentication
+# Next: private product-image API contract and backend slice
 
 ## Current outcome
 
-Complete the approved username-first WebAuthn passkey feature described in
-[docs/passkey-authentication.md](docs/passkey-authentication.md), then make it
-safe to commit as one additive authentication slice.
+Implement the approved authenticated product-image API through its backend
+storage boundary, then verify the contract and persistence mapping. The
+governing specification is
+[docs/product-image-storage.md](docs/product-image-storage.md).
 
-## Ownership and surfaces
+## Scope and delivery surfaces
 
-- API/contract: `backend/src/main/java/com/example/crud/auth/Passkey*`,
-  `AuthController.java`, `SecurityConfig.java`, migration `V2`, and
-  `docs/openapi.yaml`.
-- Browser UI: `frontend/src/app/core/passkey.service.ts`, auth/profile
-  components and focused specs.
-- Realtime: N/A; the approved specification records no STOMP behavior.
-- Browser-to-API: secure-context manual Touch ID journey remains required.
+- API/contract: add the three image operations and `Product`/error schemas to
+  `docs/openapi.yaml`; implement byte validation, private retrieval, and
+  recoverable storage failures in `backend/src/main/java/com/example/crud/product`.
+- Data/runtime: retain the committed nullable metadata migration; finish the
+  MinIO configuration, private-bucket bootstrap, resilience policy, and
+  focused tests. PostgreSQL migration plus Hibernate validation are required.
+- Browser UI and browser-to-API: sequential after the backend contract is
+  green, because they consume the endpoints and error semantics.
+- Realtime: N/A for image operations; the specification keeps current product
+  lifecycle events unchanged.
 
-## Acceptance and current evidence
+## Acceptance evidence
 
-- One verified platform credential per username; password-confirmed enrollment,
-  generic public assertion failure, single-use/expiring challenges, and JWT
-  issuance only after verified assertion.
-- Full backend verification passes with Java 17: 21 tests green. Focused
-  profile regression coverage proves a renamed user retains their passkey.
-- Default `docker compose up --build` is green after replacing the backend
-  cache warm-up's `go-offline` goal. Backend health is `UP` and the frontend's
-  same-origin demo login succeeds; see the Docker incident record for cause
-  and repeat-build evidence.
-- TypeScript compilation passes. The focused Chrome Headless command exits
-  successfully but only emits `Building...` in this environment, so browser
-  specs are not recorded green without a normal Karma success summary.
-- Still required: OpenAPI validation, full backend/Angular verification,
-  completed Angular build, and the secure-context browser journey.
+- Upload, replacement, retrieval, removal, authentication, malformed/invalid
+  content, and unavailable-storage scenarios have focused Red-to-Green tests.
+- Product responses expose only `hasImage`, never object keys or credentials.
+- `docker compose config --quiet`, OpenAPI validation, focused and full backend
+  tests, isolated PostgreSQL migration/schema validation, and MinIO outage
+  evidence are recorded before this backend slice is complete.
 
-## Constraints and blockers
+## Constraints and sequencing
 
-- Keep password login as recovery and do not modify unrelated profile/realtime
-  work already present in the tree.
-- This slice is **sequential**: API, migration, OpenAPI, and browser client
-  share the authentication contract. No parallel lanes are safe.
-- Local Spring tests currently need Java 17 because the default Java 21 test
-  process cannot attach Mockito's agent in this environment.
+- The current worktree's MinIO dependency and Compose edits are part of this
+  slice; preserve the private bucket and do not expose MinIO ports or browser
+  credentials.
+- This work is **sequential**: OpenAPI, controllers, Angular client, and
+  product representation share one contract. No parallel-safe lane exists.
+- Product deletion must commit even if post-commit object cleanup is temporarily
+  unavailable. Keep uploads/replacements from changing the active metadata on
+  a validation or storage failure.
 
 ## Handoff condition
 
-Update this file with actual command evidence; only then provide a path-scoped
-`feat(auth): add single Touch ID passkey login` commit handoff with a `Next:`
-body line.
+Advance to focused Angular upload/preview work only after the backend contract,
+storage failure semantics, PostgreSQL validation, and runtime evidence are
+green. The later browser journey remains required before marking the feature
+`DONE`.
