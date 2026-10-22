@@ -8,6 +8,7 @@
 | Development H2 and production PostgreSQL profiles | DONE | Both isolated Compose journeys passed: dev H2 console/demo login, plus Flyway PostgreSQL/database login/product persistence after backend restart. | [Environment profile plan](docs/environment-profiles.md) |
 | Frontend backend readiness | IN PROGRESS | Isolated Compose proved the shell while Spring was starting (`503` health), then `UP` and same-origin login. Focused Karma browser evidence remains inconclusive. | [Backend-readiness specification](docs/backend-readiness.md) |
 | Profile identity, display name, picture, and product lifecycle notifications | IN PROGRESS | Product lifecycle notices are in progress. Existing username-renaming profile behavior conflicts with the proposed immutable-username/display-name/picture revision; no picture-storage, browser, or migration evidence exists yet. | [Specification](docs/profile-and-product-notifications.md) |
+| Private product images with MinIO resilience | PLANNED | Product policy is approved, but no API, migration, browser, Compose, or outage evidence exists. | [Product image storage specification](docs/product-image-storage.md) |
 
 `DONE` requires the evidence named in its row. The in-memory H2 database is an
 intentional local-development simplification, not persistent application state.
