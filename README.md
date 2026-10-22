@@ -1,4 +1,4 @@
-# Java + Angular CRUD (interview practice project)
+# Java + Angular CRUD
 
 Spring Boot 3 (Java 17) REST API + Angular 19 (standalone components, signals).
 Domain: **Products** with login, list/search/pagination, create, edit, delete.
@@ -125,7 +125,7 @@ Open `http://localhost:4200`. The proxy forwards `/api/*` to Spring, so the brow
 | Change `app.jwt.expiration-ms` to `10000`, wait, then click anything | 401 -> auto logout -> login page | `error.interceptor.ts` |
 | Open a bad URL like `/api/products/999` | 404 with a readable message | `NotFoundException.java` |
 
-## Interview topic map
+## Architecture and implementation map
 
 ### Angular
 
@@ -168,7 +168,7 @@ Open `http://localhost:4200`. The proxy forwards `/api/*` to Spring, so the brow
 | Transactions, dirty checking on update | `ProductService.java` |
 | `@PrePersist`, `LocalDateTime` as ISO JSON | `Product.java` |
 
-## Known simplifications (say these out loud in an interview)
+## Known simplifications and trade-offs
 
 - `dev` deliberately uses one hard-coded in-memory user; `prod` loads users from PostgreSQL. JWT roles remain fixed in the current token filter, so role-based authorization is still a future improvement.
 - JWT and bootstrap secrets come from environment variables. A production deployment should source them from a secret manager.
