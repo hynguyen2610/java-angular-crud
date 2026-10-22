@@ -93,7 +93,7 @@ class ProductServiceLifecycleTest {
     }
 
     private ProductDto input(String name) {
-        return new ProductDto(null, name, null, BigDecimal.ONE, 1, null);
+        return new ProductDto(null, name, null, BigDecimal.ONE, 1, null, false);
     }
 
     private Product product(Long id, String name) {

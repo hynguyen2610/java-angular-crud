@@ -6,9 +6,10 @@ export interface Product {
   price: number;
   quantity: number;
   createdAt: string; // ISO date-time string from Jackson
+  hasImage: boolean;
 }
 
-export type ProductInput = Omit<Product, 'id' | 'createdAt'>;
+export type ProductInput = Omit<Product, 'id' | 'createdAt' | 'hasImage'>;
 
 export interface Page<T> {
   content: T[];

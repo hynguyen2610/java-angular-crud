@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.TestConstructor;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,6 +38,24 @@ class ProductControllerValidationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.errors.price").value("Price must be a number"));
+    }
+
+    @Test
+    void productRepresentationsDeclareWhetherTheyHaveAPrivateImage() throws Exception {
+        String token = loginToken();
+
+        String created = mvc.perform(post("/api/products")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Desk\",\"price\":10,\"quantity\":1}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.hasImage").value(false))
+                .andReturn().getResponse().getContentAsString();
+
+        long id = objectMapper.readTree(created).get("id").asLong();
+        mvc.perform(get("/api/products/{id}", id).header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasImage").value(false));
     }
 
     private String loginToken() throws Exception {

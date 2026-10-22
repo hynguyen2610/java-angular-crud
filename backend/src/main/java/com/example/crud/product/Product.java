@@ -26,6 +26,12 @@ public class Product {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(length = 255)
+    private String imageKey;
+
+    @Column(length = 32)
+    private String imageMediaType;
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();
@@ -41,4 +47,8 @@ public class Product {
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getImageKey() { return imageKey; }
+    public void setImageKey(String imageKey) { this.imageKey = imageKey; }
+    public String getImageMediaType() { return imageMediaType; }
+    public void setImageMediaType(String imageMediaType) { this.imageMediaType = imageMediaType; }
 }

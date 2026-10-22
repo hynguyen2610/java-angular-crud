@@ -11,10 +11,11 @@ public record ProductDto(
         @Size(max = 500, message = "Max 500 characters") String description,
         @NotNull(message = "Price is required") @DecimalMin(value = "0.0", message = "Must be >= 0") BigDecimal price,
         @NotNull(message = "Quantity is required") @Min(value = 0, message = "Must be >= 0") Integer quantity,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        boolean hasImage) {
 
     public static ProductDto from(Product p) {
         return new ProductDto(p.getId(), p.getName(), p.getDescription(),
-                p.getPrice(), p.getQuantity(), p.getCreatedAt());
+                p.getPrice(), p.getQuantity(), p.getCreatedAt(), p.getImageKey() != null);
     }
 }
