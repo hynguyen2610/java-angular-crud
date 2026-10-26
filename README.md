@@ -180,7 +180,7 @@ Open `http://localhost:4200`. The proxy forwards `/api/*` to Spring, so the brow
 
 1. Add `GET /api/products?sort=price,asc` and sortable column headers.
 2. Add roles (`USER` can read, `ADMIN` can write) with `@PreAuthorize`.
-3. Add image upload (`MultipartFile` on Spring, `FormData` on Angular).
+3. Add image upload (`MultipartFile` on Spring, `FormData` on Angular). In progress: see the [product image storage specification](docs/product-image-storage.md).
 4. Add a category entity with a one-to-many relation and a dropdown in the form.
 5. Add a Spring `@WebMvcTest` for the controller and an Angular component test for the list.
 6. Containerize: build Angular, copy `dist/` into Spring's `static/`, or serve it with Nginx.

@@ -2,7 +2,16 @@
 
 ## Status
 
-**PLANNED — product-policy decisions approved; no implementation or verification evidence exists.** This document governs product images only; it does not change the separate proposed profile-picture feature.
+**IN PROGRESS — backend slice implemented; browser UI and browser-to-API journey not started.** This document governs product images only; it does not change the separate proposed profile-picture feature.
+
+| Surface | State | Evidence |
+|---|---|---|
+| API/contract | Implemented | `docs/openapi.yaml` image operations; MockMvc, validator, cleaner, and lifecycle tests; full backend suite green (51 tests), including PostgreSQL migration and Hibernate validation via Testcontainers. |
+| Data/runtime | Partially verified | Flyway `V4` metadata columns validated on PostgreSQL; Compose MinIO and private-bucket bootstrap committed. No Compose upload journey or controlled MinIO outage has been run. |
+| Browser UI | Not started | Angular only declares `Product.hasImage`. See [Frontend delivery plan](#frontend-delivery-plan-test-driven). |
+| Browser-to-API | Not started | Requires the nginx upload limit and the Compose E2E below. |
+
+Recorded deviations from this plan are listed in [Implemented backend behavior](#implemented-backend-behavior).
 
 ## Outcome and boundaries
 
@@ -62,7 +71,7 @@ MinIO and PostgreSQL cannot share a transaction. Replacement stores the new obje
 |---|---|---|---|
 | `PUT /api/products/{id}/image` | Bearer token; `multipart/form-data` with one `file` part | `200` updated `Product` with `hasImage: true` | `400` invalid/missing/disallowed bytes; `413` too large; `401` unauthenticated; `404` missing product; `503` unavailable/open storage circuit. The prior image remains active. |
 | `GET /api/products/{id}/image` | Bearer token | `200` image bytes with server-detected media type and `Cache-Control: private` | `401` unauthenticated; `404` no image or unavailable referenced object; `503` unavailable/open circuit. |
-| `DELETE /api/products/{id}/image` | Bearer token | `204`; metadata no longer references an image | `401` unauthenticated; `404` missing product/no image; `503` if metadata cannot safely change. Object cleanup follows commit. |
+| `DELETE /api/products/{id}/image` | Bearer token | `204`; metadata no longer references an image | `401` unauthenticated; `404` missing product/no image. Object cleanup follows commit and never changes the response, so storage outages do not produce `503` here. |
 
 Every existing product response adds `hasImage: boolean`. It is present in list, get, create, and update responses. Never return raw MinIO keys, bucket names, storage exceptions, or presigned URLs.
 
@@ -88,6 +97,37 @@ Compose adds private MinIO with a named volume, health check, and deterministic 
 | Authenticated journey | Browser-to-API | User uploads, replaces, reloads, and sees an image after backend restart; after logout, image fetches fail and object URLs clear. | Compose browser E2E. |
 | Realtime | N/A | Image operations do not publish current product-lifecycle events; HTTP remains authoritative. | Event-contract/source review. |
 | Operations | Runtime | MinIO persists with its named volume; cold/cached builds, health checks, and outage behavior match this plan. | Compose smoke extension and outage journey. |
+
+## Implemented backend behavior
+
+The backend slice follows this plan except where noted. Rows marked **open** still need a decision or work before the feature is `DONE`.
+
+| Topic | Implemented behavior | Plan difference |
+|---|---|---|
+| Concurrency | Product update/delete and image replace/remove take a `PESSIMISTIC_WRITE` row lock (`ProductRepository.findByIdForUpdate`), so concurrent writes cannot restore a deleted key or orphan a replacement. Images change rarely, so waiting is acceptable. | Not specified in the plan. |
+| Replacement compensation | Upload runs with no transaction open; only lock-and-update is transactional. The previous object is deleted after commit; the new one only on a confirmed rollback. On an unknown outcome both objects are kept and logged. | Matches the plan. |
+| Cleanup | `ProductImageCleaner` deletes on a single background thread with a 1,000-item queue; it never fails a committed request and drains for up to 15 s on shutdown. | **Open:** no reconciliation job; orphans from failed cleanup are only logged. |
+| Resilience | OkHttp 2 s connect / 10 s read-write timeouts; circuit breaker `productImageStorage` (window 10, minimum 5 calls, 50% threshold, 30 s open) on put/get only. Missing objects (`NoSuchKey`) return `404` and count as breaker successes; cleanup deletes bypass the breaker. | **Open:** plan says a 3 s timeout, read/delete retries, and Actuator circuit metrics; none of those are implemented. |
+| Validation | Byte-sniffed JPEG/PNG/WebP (TwelveMonkeys pure-Java WebP); header dimensions checked before decoding: ≤ 8,000 px per side and ≤ 24 MP total. | The 24 MP decode budget is new. |
+| Size limits | `spring.servlet.multipart.max-file-size=5MB` (shared by the validator and the `413` message), `max-request-size=6MB`, Tomcat `max-swallow-size=10MB` so bodies up to ~16 MB get a `413` rather than a connection reset. | Matches the plan. |
+| Retrieval | Runs outside a transaction; media type comes from the database, falling back to byte detection, then `application/octet-stream`. | Matches the plan. |
+
+## Frontend delivery plan (test-driven)
+
+Every step starts with a failing (Red) Angular spec, then the smallest code to make it pass. Existing files and their `.spec.ts` siblings are extended; new units get their own spec.
+
+| Step | Unit | Red tests to write first |
+|---|---|---|
+| 1. API client | `features/products/product.service.ts` | `uploadImage(id, file)` sends `PUT /api/products/{id}/image` as `FormData` with one `file` part and returns the updated `Product`; `getImage(id)` requests `responseType: 'blob'`; `removeImage(id)` sends `DELETE`. |
+| 2. Image view | New `features/products/product-image.component.ts` | Fetches only when `hasImage` is true; renders an object URL with meaningful `alt`; revokes the URL when the input changes and on destroy; a failed fetch shows an accessible placeholder without changing layout size. |
+| 3. Upload/edit | `features/products/product-form.component.ts` | Shows the current image; pre-validates type (JPEG/PNG/WebP) and size (≤ 5 MiB) before sending; maps `400`, `413`, and `503` to distinct messages; keeps the prior image after a failure and offers retry; shows progress while uploading. Server validation remains authoritative. |
+| 4. Remove | `product-form.component.ts` | Asks for confirmation, calls `removeImage`, then clears the preview; a `404` (already removed) also clears it. |
+| 5. List preview | `features/products/product-table.component.ts` | Renders the compact image component for rows with `hasImage`, nothing for rows without; table columns keep their widths. |
+| 6. Session | `core/auth.service.ts` | Logout clears image-view state, so no object URL outlives the session. |
+| 7. Delivery | `frontend/nginx.conf` | Add `client_max_body_size 6m;` to the `/api/` location. nginx's 1 MB default would otherwise reject valid uploads with its own `413` before Spring sees them. |
+| 8. Journey | Compose browser E2E | Upload, replace, reload, and see the image after a backend restart; logout clears it; a MinIO outage shows the `503` message and keeps the prior image. |
+
+Run focused specs while iterating, then the full gates below.
 
 ## Implementation sequence and gates
 
