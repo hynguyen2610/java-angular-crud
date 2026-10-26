@@ -33,7 +33,7 @@ class ProductLifecycleTransactionTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("admin", null, List.of()));
 
-        products.create(new ProductDto(null, "Lifecycle keyboard", null, BigDecimal.ONE, 1, null));
+        products.create(new ProductDto(null, "Lifecycle keyboard", null, BigDecimal.ONE, 1, null, false));
 
         verify(messaging).convertAndSend(org.mockito.ArgumentMatchers.eq("/topic/products"),
                 argThat((ProductLifecycleEvent event) -> event.type().equals("product.created")

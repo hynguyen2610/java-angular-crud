@@ -36,7 +36,11 @@ class PostgresSchemaIntegrationTest {
                 "select version from flyway_schema_history where success = true order by installed_rank",
                 String.class);
 
-        assertThat(migrations).containsExactly("1", "2");
+        assertThat(migrations).containsExactly("1", "2", "4");
         assertThat(jdbc.queryForObject("select count(*) from product", Integer.class)).isPositive();
+        assertThat(jdbc.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_name = 'product' and column_name in ('image_key', 'image_media_type')
+                """, Integer.class)).isEqualTo(2);
     }
 }

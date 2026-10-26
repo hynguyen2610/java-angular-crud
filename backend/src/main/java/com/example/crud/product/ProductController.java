@@ -2,6 +2,8 @@ package com.example.crud.product;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -9,9 +11,11 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService service;
+    private final ProductImageService images;
 
-    public ProductController(ProductService service) {
+    public ProductController(ProductService service, ProductImageService images) {
         this.service = service;
+        this.images = images;
     }
 
     @GetMapping
@@ -35,6 +39,24 @@ public class ProductController {
     @PutMapping("/{id}")
     public ProductDto update(@PathVariable Long id, @Valid @RequestBody ProductDto dto) {
         return service.update(id, dto);
+    }
+
+    @PutMapping(path = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductDto replaceImage(@PathVariable Long id, @RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
+        return images.replace(id, file);
+    }
+
+    @GetMapping("/{id}/image")
+    public ResponseEntity<byte[]> image(@PathVariable Long id) {
+        var image = images.get(id);
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noCache().cachePrivate())
+                .contentType(MediaType.parseMediaType(image.mediaType())).body(image.bytes());
+    }
+
+    @DeleteMapping("/{id}/image")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeImage(@PathVariable Long id) {
+        images.remove(id);
     }
 
     @DeleteMapping("/{id}")
