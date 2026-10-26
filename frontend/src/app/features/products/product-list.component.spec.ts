@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Page, Product } from '../../core/models';
 import { ProductListComponent } from './product-list.component';
@@ -12,6 +13,7 @@ const desk: Product = {
   price: 120,
   quantity: 2,
   createdAt: '2026-10-04T00:00:00Z',
+  hasImage: false,
 };
 
 const emptyPage: Page<Product> = {
@@ -37,7 +39,7 @@ describe('ProductListComponent sibling communication', () => {
 
     TestBed.configureTestingModule({
       imports: [ProductListComponent],
-      providers: [{ provide: ProductService, useValue: productService }],
+      providers: [provideRouter([]), { provide: ProductService, useValue: productService }],
     });
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
@@ -63,11 +65,13 @@ describe('ProductListComponent sibling communication', () => {
     spyOn(window, 'confirm').and.returnValue(true);
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
+    // beforeEach already created a component, so count only the loads after the delete.
+    productService.list.calls.reset();
 
     (fixture.nativeElement.querySelector('app-product-table .danger') as HTMLButtonElement).click();
 
     expect(productService.delete).toHaveBeenCalledWith(desk.id);
-    expect(productService.list).toHaveBeenCalledTimes(2);
+    expect(productService.list).toHaveBeenCalledTimes(1);
   });
 
   it('shows a recoverable error when a table delete request fails', () => {
