@@ -17,6 +17,8 @@
 
   <properties>
     <java.version>17</java.version>
+    <!-- Boot 3.3's managed 1.19.x uses a Docker API version that current Docker Desktop rejects (HTTP 400). -->
+    <testcontainers.version>1.21.4</testcontainers.version>
   </properties>
 
   <dependencies>
@@ -26,10 +28,9 @@
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-websocket</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
-    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-aop</artifactId></dependency>
     <dependency><groupId>io.github.resilience4j</groupId><artifactId>resilience4j-spring-boot3</artifactId><version>2.2.0</version></dependency>
     <dependency><groupId>io.minio</groupId><artifactId>minio</artifactId><version>8.6.0</version></dependency>
-    <dependency><groupId>com.github.gotson</groupId><artifactId>webp-imageio</artifactId><version>0.2.2</version></dependency>
+    <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-webp</artifactId><version>3.12.0</version></dependency>
     <dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>
