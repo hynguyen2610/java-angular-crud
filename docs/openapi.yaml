@@ -47,7 +47,6 @@ paths:
         '204': { description: Image metadata removed; object cleanup follows commit }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { description: Product or image not found }
-        '503': { description: Storage state prevents safe removal }
   /api/auth/logout:
     post:
       operationId: recordLogout

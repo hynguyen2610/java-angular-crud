@@ -21,7 +21,8 @@ class ProductServiceLifecycleTest {
 
     private final ProductRepository repository = org.mockito.Mockito.mock(ProductRepository.class);
     private final ApplicationEventPublisher events = org.mockito.Mockito.mock(ApplicationEventPublisher.class);
-    private final ProductService service = new ProductService(repository, events);
+    private final ProductImageService images = org.mockito.Mockito.mock(ProductImageService.class);
+    private final ProductService service = new ProductService(repository, events, images);
 
     @AfterEach
     void clearAuthentication() {
@@ -61,7 +62,7 @@ class ProductServiceLifecycleTest {
     void publishesAnUpdatedEventWithTheCommittedProductIdentity() {
         authenticatedAs("admin");
         Product existing = product(42L, "Keyboard");
-        when(repository.findById(42L)).thenReturn(Optional.of(existing));
+        when(repository.findByIdForUpdate(42L)).thenReturn(Optional.of(existing));
 
         service.update(42L, input("Mechanical keyboard"));
 
@@ -76,7 +77,7 @@ class ProductServiceLifecycleTest {
     void capturesTheDeletedProductIdentityBeforeRemoval() {
         authenticatedAs("admin");
         Product existing = product(42L, "Keyboard");
-        when(repository.findById(42L)).thenReturn(Optional.of(existing));
+        when(repository.findByIdForUpdate(42L)).thenReturn(Optional.of(existing));
 
         service.delete(42L);
 

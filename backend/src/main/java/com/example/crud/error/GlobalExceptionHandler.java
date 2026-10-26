@@ -4,15 +4,24 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.example.crud.auth.UsernameAlreadyUsedException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.util.unit.DataSize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private final DataSize maxUploadSize;
+
+    public GlobalExceptionHandler(@Value("${spring.servlet.multipart.max-file-size}") DataSize maxUploadSize) {
+        this.maxUploadSize = maxUploadSize;
+    }
 
     @ExceptionHandler(NotFoundException.class)
     ResponseEntity<ApiError> notFound(NotFoundException e) {
@@ -39,6 +48,12 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> status(ResponseStatusException e) {
         int code = e.getStatusCode().value();
         return ResponseEntity.status(code).body(new ApiError(code, e.getReason(), Map.of()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadTooLarge(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(413).body(new ApiError(413,
+                "Upload must be " + maxUploadSize.toMegabytes() + " MiB or smaller", Map.of()));
     }
 
     @ExceptionHandler(UsernameAlreadyUsedException.class)

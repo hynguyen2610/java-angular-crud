@@ -14,10 +14,12 @@ public class ProductService {
 
     private final ProductRepository repo;
     private final ApplicationEventPublisher events;
+    private final ProductImageService images;
 
-    public ProductService(ProductRepository repo, ApplicationEventPublisher events) {
+    public ProductService(ProductRepository repo, ApplicationEventPublisher events, ProductImageService images) {
         this.repo = repo;
         this.events = events;
+        this.images = images;
     }
 
     public PageResponse<ProductDto> list(String q, int page, int size) {
@@ -44,7 +46,7 @@ public class ProductService {
 
     @Transactional
     public ProductDto update(Long id, ProductDto dto) {
-        Product p = find(id);
+        Product p = findForUpdate(id);
         apply(p, dto);
         publish("product.updated", p);
         return ProductDto.from(p); // dirty checking saves it on commit
@@ -52,13 +54,18 @@ public class ProductService {
 
     @Transactional
     public void delete(Long id) {
-        Product p = find(id);
+        Product p = findForUpdate(id);
         repo.delete(p);
+        images.deleteAfterCommit(p.getImageKey());
         publish("product.deleted", p);
     }
 
     private Product find(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("Product " + id + " not found"));
+    }
+
+    private Product findForUpdate(Long id) {
+        return repo.findByIdForUpdate(id).orElseThrow(() -> new NotFoundException("Product " + id + " not found"));
     }
 
     private void apply(Product p, ProductDto dto) {
