@@ -2,7 +2,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../core/tokens';
+import { Product } from '../../core/models';
 import { ProductService } from './product.service';
+
+const desk: Product = {
+  id: 3,
+  name: 'Desk',
+  description: null,
+  price: 120,
+  quantity: 2,
+  createdAt: '2026-10-04T00:00:00Z',
+  hasImage: false,
+};
 
 describe('ProductService', () => {
   let service: ProductService;
@@ -40,5 +51,42 @@ describe('ProductService', () => {
     const req = http.expectOne('/api/products/3');
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
+  });
+
+  describe('images', () => {
+    it('uploads an image as multipart form data with one file part', () => {
+      const file = new File([new Uint8Array([0x89, 0x50])], 'desk.png', { type: 'image/png' });
+      let updated: Product | undefined;
+      service.uploadImage(3, file).subscribe(product => (updated = product));
+
+      const req = http.expectOne('/api/products/3/image');
+      expect(req.request.method).toBe('PUT');
+      const body = req.request.body as FormData;
+      expect(body instanceof FormData).toBeTrue();
+      expect(body.getAll('file').length).toBe(1);
+      expect((body.get('file') as File).name).toBe('desk.png');
+
+      req.flush({ ...desk, hasImage: true });
+      expect(updated?.hasImage).toBeTrue();
+    });
+
+    it('fetches the private image as a blob through the authenticated client', () => {
+      let image: Blob | undefined;
+      service.getImage(3).subscribe(blob => (image = blob));
+
+      const req = http.expectOne('/api/products/3/image');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+
+      req.flush(new Blob(['png'], { type: 'image/png' }));
+      expect(image?.type).toBe('image/png');
+    });
+
+    it('removes the image with DELETE', () => {
+      service.removeImage(3).subscribe();
+      const req = http.expectOne('/api/products/3/image');
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+    });
   });
 });

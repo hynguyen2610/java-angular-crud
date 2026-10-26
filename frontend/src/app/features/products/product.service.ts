@@ -29,4 +29,19 @@ export class ProductService {
   delete(id: number) {
     return this.http.delete<void>(`${this.url}/${id}`);
   }
+
+  uploadImage(id: number, file: File) {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.put<Product>(`${this.url}/${id}/image`, body);
+  }
+
+  // The image endpoint needs the bearer token, so it cannot be used as a plain <img src>.
+  getImage(id: number) {
+    return this.http.get(`${this.url}/${id}/image`, { responseType: 'blob' });
+  }
+
+  removeImage(id: number) {
+    return this.http.delete<void>(`${this.url}/${id}/image`);
+  }
 }
