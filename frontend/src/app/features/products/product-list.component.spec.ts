@@ -23,6 +23,18 @@ const emptyPage: Page<Product> = {
   totalPages: 0,
 };
 
+/** AG Grid renders cell renderers asynchronously, so wait for the row's Delete button to appear. */
+async function gridDeleteButton(fixture: ComponentFixture<ProductListComponent>): Promise<HTMLButtonElement> {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('app-product-grid .danger') as HTMLButtonElement | null;
+    if (button) return button;
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+  throw new Error('AG Grid did not render the Delete button');
+}
+
 describe('ProductListComponent sibling communication', () => {
   let fixture: ComponentFixture<ProductListComponent>;
   const productService = {
@@ -59,19 +71,21 @@ describe('ProductListComponent sibling communication', () => {
     expect(fixture.nativeElement.textContent).toContain('Desk');
   }));
 
-  it('handles a confirmed table delete request by deleting and reloading', () => {
+  it('handles a confirmed table delete request by deleting and reloading', async () => {
     productService.list.and.returnValue(of({ ...emptyPage, content: [desk], totalElements: 1, totalPages: 1 }));
     spyOn(window, 'confirm').and.returnValue(true);
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('app-product-grid .danger') as HTMLButtonElement).click();
+    const deleteButton = await gridDeleteButton(fixture);
+    productService.list.calls.reset();
+    deleteButton.click();
 
     expect(productService.delete).toHaveBeenCalledWith(desk.id);
-    expect(productService.list).toHaveBeenCalledTimes(2);
+    expect(productService.list).toHaveBeenCalledTimes(1);
   });
 
-  it('shows a recoverable error when a table delete request fails', () => {
+  it('shows a recoverable error when a table delete request fails', async () => {
     productService.list.and.returnValue(of({ ...emptyPage, content: [desk], totalElements: 1, totalPages: 1 }));
     productService.delete.and.returnValue(throwError(() => new HttpErrorResponse({
       status: 500,
@@ -81,7 +95,7 @@ describe('ProductListComponent sibling communication', () => {
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('app-product-grid .danger') as HTMLButtonElement).click();
+    (await gridDeleteButton(fixture)).click();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Delete failed');
