@@ -1,0 +1,28 @@
+# LocalStack for the local Docker Desktop Kubernetes cluster.
+# Install or upgrade:
+#   helm repo add localstack https://localstack.github.io/helm-charts
+#   helm upgrade --install localstack localstack/localstack --version 0.7.1 \
+#     --namespace localstack --create-namespace -f k8s/localstack/values.yaml
+# Reach it from the host:
+#   kubectl -n localstack port-forward svc/localstack 4566:4566
+
+# Last community release that runs without an auth token (2026.x images require LOCALSTACK_AUTH_TOKEN).
+# The chart defaults to localstack-pro:latest, which also needs a token.
+image:
+  repository: localstack/localstack
+  tag: "4.14.0"
+
+# Docker Desktop's multi-node cluster does not expose NodePorts to the host; use port-forward.
+service:
+  type: ClusterIP
+
+# The chart's helm test uses an unpinned aws-cli image; skip it.
+tests:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
