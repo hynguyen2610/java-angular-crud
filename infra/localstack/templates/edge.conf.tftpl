@@ -1,3 +1,11 @@
+# Metrics for the Datadog nginx check; not exposed by the edge Service.
+server {
+  listen 8081;
+  location = /nginx_status {
+    stub_status;
+  }
+}
+
 server {
   listen 8080;
   server_name _;

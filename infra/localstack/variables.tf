@@ -68,3 +68,32 @@ variable "postgres_user" {
   type    = string
   default = "product_manager"
 }
+
+variable "environment" {
+  description = "Datadog env tag."
+  type        = string
+  default     = "local"
+}
+
+variable "datadog_site" {
+  type    = string
+  default = "datadoghq.com"
+}
+
+variable "datadog_namespace" {
+  description = "Namespace that already holds the Datadog API key secret."
+  type        = string
+  default     = "datadog"
+}
+
+variable "datadog_api_key_secret" {
+  description = "Pre-created secret in datadog_namespace with the key in 'api-key'; never managed by Terraform."
+  type        = string
+  default     = "datadog-secret"
+}
+
+variable "datadog_java_tracer_version" {
+  description = "dd-trace-java version injected into the backend by the Datadog admission controller."
+  type        = string
+  default     = "v1.68.2"
+}

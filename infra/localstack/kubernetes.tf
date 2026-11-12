@@ -54,6 +54,22 @@ resource "kubernetes_stateful_set_v1" "postgres" {
     template {
       metadata {
         labels = { app = "postgres" }
+        annotations = {
+          "ad.datadoghq.com/postgres.checks" = jsonencode({
+            postgres = {
+              init_config = {}
+              instances = [{
+                host     = "%%host%%"
+                port     = 5432
+                username = "datadog"
+                password = "ENC[k8s_secret@${var.namespace}/${local.dd_pg_secret}/password]"
+                dbname   = var.postgres_db
+                tags     = ["service:product-manager-postgres", "env:${var.environment}"]
+              }]
+            }
+          })
+          "ad.datadoghq.com/postgres.logs" = jsonencode([{ source = "postgresql", service = "product-manager-postgres" }])
+        }
       }
       spec {
         container {
@@ -132,7 +148,27 @@ resource "kubernetes_deployment_v1" "backend" {
 
     template {
       metadata {
-        labels = { app = "backend" }
+        labels = {
+          app = "backend"
+          # Datadog admission controller injects dd-trace-java and DD_* settings.
+          "admission.datadoghq.com/enabled" = "true"
+          "tags.datadoghq.com/env"          = var.environment
+          "tags.datadoghq.com/service"      = "product-manager-backend"
+          "tags.datadoghq.com/version"      = local.backend_version
+        }
+        annotations = {
+          "admission.datadoghq.com/java-lib.version" = var.datadog_java_tracer_version
+          "ad.datadoghq.com/backend.logs" = jsonencode([{
+            source  = "java"
+            service = "product-manager-backend"
+            # Keep stack traces together with the log line that started them.
+            log_processing_rules = [{
+              type    = "multi_line"
+              name    = "spring_boot_log_start"
+              pattern = "\\d{4}-\\d{2}-\\d{2}"
+            }]
+          }])
+        }
       }
       spec {
         container {
@@ -199,7 +235,8 @@ resource "kubernetes_deployment_v1" "backend" {
     }
   }
 
-  depends_on = [kubernetes_stateful_set_v1.postgres]
+  # The admission webhook must exist before backend pods are created, or the tracer isn't injected.
+  depends_on = [kubernetes_stateful_set_v1.postgres, helm_release.datadog]
 }
 
 resource "kubernetes_service_v1" "backend" {
@@ -252,6 +289,16 @@ resource "kubernetes_deployment_v1" "edge" {
         annotations = {
           # Roll the pod when the nginx config changes.
           "checksum/config" = sha256(kubernetes_config_map_v1.edge.data["default.conf"])
+          "ad.datadoghq.com/nginx.checks" = jsonencode({
+            nginx = {
+              init_config = {}
+              instances = [{
+                nginx_status_url = "http://%%host%%:8081/nginx_status"
+                tags             = ["service:product-manager-edge", "env:${var.environment}"]
+              }]
+            }
+          })
+          "ad.datadoghq.com/nginx.logs" = jsonencode([{ source = "nginx", service = "product-manager-edge" }])
         }
       }
       spec {

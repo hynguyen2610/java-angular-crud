@@ -15,6 +15,28 @@ ECS, RDS, ECR and CloudFront are LocalStack Pro features, so those roles are pla
 by the cluster. Docker Desktop's nodes pull images straight from the host image
 store, so no registry is needed.
 
+## Datadog
+
+Terraform also installs the Datadog Agent (Helm chart `datadog/datadog`) into the
+`datadog` namespace, sending to `datadoghq.com`, and wires the app to it:
+
+| Source | Data | How |
+|---|---|---|
+| backend | APM traces, JVM metrics, logs with trace IDs | admission controller injects dd-trace-java; `tags.datadoghq.com/*` labels |
+| postgres | `postgres.*` metrics, logs | autodiscovery annotation; read-only `datadog` role (`pg_monitor`) created by a Job |
+| edge | `nginx.*` metrics, access logs | `stub_status` on port 8081 (not exposed by the Service) |
+
+Everything is tagged `env:local`; services are `product-manager-backend`,
+`product-manager-postgres` and `product-manager-edge`.
+
+Before the first apply, create the API key secret yourself (it is never put in
+Terraform state):
+
+```powershell
+kubectl create namespace datadog
+kubectl -n datadog create secret generic datadog-secret --from-literal=api-key=<your API key>
+```
+
 ## Deploy
 
 ```powershell
