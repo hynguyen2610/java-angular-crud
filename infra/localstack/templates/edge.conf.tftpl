@@ -1,0 +1,41 @@
+server {
+  listen 8080;
+  server_name _;
+
+  location /api/ {
+    proxy_pass ${backend};
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location = /actuator/health {
+    proxy_pass ${backend}/actuator/health;
+    proxy_set_header Host $host;
+  }
+
+  location /ws {
+    proxy_pass ${backend};
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Static assets from the S3 website endpoint in LocalStack.
+  location / {
+    proxy_pass ${s3_upstream};
+    proxy_set_header Host ${website_host};
+    proxy_intercept_errors on;
+    error_page 403 404 = @app_shell;
+  }
+
+  # Client-side routes: serve the Angular shell with 200, not S3's 404.
+  location @app_shell {
+    rewrite ^ /index.html break;
+    proxy_pass ${s3_upstream};
+    proxy_set_header Host ${website_host};
+  }
+}
