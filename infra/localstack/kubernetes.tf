@@ -15,9 +15,21 @@ resource "kubernetes_secret_v1" "app" {
 
   data = {
     APP_JWT_SECRET               = local.app_secrets.jwt_secret
-    DB_PASSWORD                  = local.app_secrets.postgres_password
     APP_BOOTSTRAP_ADMIN_USERNAME = local.app_secrets.admin_username
     APP_BOOTSTRAP_ADMIN_PASSWORD = local.app_secrets.admin_password
+  }
+}
+
+# Only for the Postgres server and the Datadog user Job. The backend does not mount
+# this: it reads product-manager/postgres from Secrets Manager itself.
+resource "kubernetes_secret_v1" "postgres" {
+  metadata {
+    name      = "postgres"
+    namespace = kubernetes_namespace_v1.app.metadata[0].name
+  }
+
+  data = {
+    POSTGRES_PASSWORD = local.postgres_password
   }
 }
 
@@ -88,8 +100,8 @@ resource "kubernetes_stateful_set_v1" "postgres" {
             name = "POSTGRES_PASSWORD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret_v1.app.metadata[0].name
-                key  = "DB_PASSWORD"
+                name = kubernetes_secret_v1.postgres.metadata[0].name
+                key  = "POSTGRES_PASSWORD"
               }
             }
           }
@@ -193,6 +205,28 @@ resource "kubernetes_deployment_v1" "backend" {
             name  = "DB_USERNAME"
             value = var.postgres_user
           }
+          # The DB password is fetched from Secrets Manager at startup to build the Hikari pool.
+          env {
+            name  = "APP_DATASOURCE_PASSWORD_SECRET_ID"
+            value = aws_secretsmanager_secret.postgres.name
+          }
+          env {
+            name  = "APP_AWS_SECRETSMANAGER_ENDPOINT"
+            value = "http://${var.localstack_cluster_host}"
+          }
+          env {
+            name  = "AWS_REGION"
+            value = var.aws_region
+          }
+          # LocalStack accepts any credentials; these are its documented dummy values.
+          env {
+            name  = "AWS_ACCESS_KEY_ID"
+            value = "test"
+          }
+          env {
+            name  = "AWS_SECRET_ACCESS_KEY"
+            value = "test"
+          }
           env {
             name  = "APP_CORS_ALLOWED_ORIGINS"
             value = var.app_origin
@@ -236,7 +270,7 @@ resource "kubernetes_deployment_v1" "backend" {
   }
 
   # The admission webhook must exist before backend pods are created, or the tracer isn't injected.
-  depends_on = [kubernetes_stateful_set_v1.postgres, helm_release.datadog]
+  depends_on = [kubernetes_stateful_set_v1.postgres, helm_release.datadog, aws_secretsmanager_secret_version.postgres]
 }
 
 resource "kubernetes_service_v1" "backend" {

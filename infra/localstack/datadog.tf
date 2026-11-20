@@ -111,8 +111,8 @@ resource "kubernetes_job_v1" "datadog_postgres_user" {
             name = "PGPASSWORD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret_v1.app.metadata[0].name
-                key  = "DB_PASSWORD"
+                name = kubernetes_secret_v1.postgres.metadata[0].name
+                key  = "POSTGRES_PASSWORD"
               }
             }
           }

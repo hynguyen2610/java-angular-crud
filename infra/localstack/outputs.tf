@@ -15,6 +15,10 @@ output "app_secret_arn" {
   value = aws_secretsmanager_secret.app.arn
 }
 
+output "postgres_secret_arn" {
+  value = aws_secretsmanager_secret.postgres.arn
+}
+
 output "admin_username" {
   value = var.admin_username
 }
